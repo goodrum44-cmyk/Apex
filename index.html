@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="APEX" />
+<title>APEX · Market Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet" />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body,#root{height:100%;width:100%;}
+  body{background:#020912;overflow-x:hidden;}
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:#020912;}
+  ::-webkit-scrollbar-thumb{background:#1e2d47;border-radius:2px;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+  .apex-fade{animation:fadeIn 0.4s ease forwards;}
+  .loading-bar{background:linear-gradient(90deg,#060f20 25%,#0e1e33 50%,#060f20 75%);background-size:400px 100%;animation:shimmer 1.4s infinite;border-radius:3px;height:14px;margin-bottom:8px;}
+  .ticker-inner{display:flex;animation:ticker 60s linear infinite;width:max-content;}
+  .ticker-inner:hover{animation-play-state:paused;}
+  @media(max-width:768px){
+    .three-col{grid-template-columns:1fr!important;}
+    .hide-mobile{display:none!important;}
+    .mobile-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch
