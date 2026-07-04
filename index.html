@@ -5,24 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="APEX" />
-<title>APEX · Market Intelligence</title>
+<title>APEX v4 · Market Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet" />
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%;width:100%}
-body{background:#020912;font-family:Inter,system-ui,sans-serif;color:#c5d8f0}
-::-webkit-scrollbar{width:3px}
+body{background:#020912;font-family:'Inter',system-ui,sans-serif;color:#c5d8f0;font-size:13px}
+::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-thumb{background:#1a2a40;border-radius:2px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes sh{0%{background-position:-300px 0}100%{background-position:300px 0}}
 .sh{background:linear-gradient(90deg,#060f20 25%,#0d1e32 50%,#060f20 75%);background-size:300px 100%;animation:sh 1.3s infinite;border-radius:3px;height:10px;margin-bottom:6px}
 @keyframes roll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.roll{display:flex;animation:roll 45s linear infinite;width:max-content}
-@keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.fu{animation:fu .3s ease forwards}
+.roll{display:flex;animation:roll 50s linear infinite;width:max-content}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}.fu{animation:fu .4s ease forwards}
 button:focus{outline:none}
+input:focus{outline:none}
 </style>
 </head>
 <body>
@@ -30,11 +31,23 @@ button:focus{outline:none}
 <script type="text/babel">
 const{useState,useEffect,useCallback}=React;
 const API="https://api.anthropic.com/v1/messages";
-const CTX=`You are APEX, a senior market intelligence AI at a tier-1 investment house.
-CURRENT DATA July 4 2026: Fed Rate 3.50-3.75% (Warsh held June 17). Rate hike 20% July FOMC, 100% December. CPI above 4% YoY Iran energy spike. June payrolls +57K vs 115K expected. ISM Mfg 53.3%. GS Risk Appetite 99th percentile. GS SPX target 8000. Q2 earnings growth 23.1% FactSet. SOX down 12% in 2 days. KOSPI down 8%. Meta surged on cloud entry. CoreWeave and Nebius plummeted. Market rotating out of mega-cap tech. PE H1 deal volume down 34% avg size 4x. Dry powder record. Blackstone 25B Pennsylvania infrastructure. Apollo 3.5B xAI compute. BofA rate cuts pushed to mid 2027. Markets reopen Jul 7. Apple earnings Jul 30. FOMC Jul 28-29.
-RISKS: Iran escalation, Fed hike sooner, AI valuation reset, PE liquidity crunch.
-TAILWINDS: AI infra spend, defense surge, earnings 23%+, broad rotation.
-Be direct, data-backed, Goldman Sachs BlackRock style. State probabilities.`;
+const CTX=`You are APEX, a senior market intelligence AI at a tier-1 investment house. You are precise, data-driven, and surgical in your analysis.
+CURRENT MARKET DATA (July 4 2026 - Independence Day, markets reopen July 7):
+MONETARY POLICY: Fed Funds 3.50-3.75% (Kevin Warsh). 20% July FOMC hike probability. 100% December hike priced. BofA: cuts pushed to mid-2027.
+INFLATION: CPI >4% YoY (3-year high), Iran/energy spike. Real wages negative YoY.
+LABOR: June payrolls +57K vs 115K expected - significant miss. Unemployment trending up.
+GROWTH: ISM Manufacturing 53.3% (expansion). ISM Services due July 7. Q2 GDP estimate ~1.8%.
+YIELD CURVE: 2yr/10yr spread -18bps (inverted). 10yr at 4.38%. Credit spreads widening.
+EQUITIES: SPX 5831. NDX 20447. SOX -12% in 2 days. DJI +0.76% rotation. GS SPX target 8000.
+SENTIMENT: GS Risk Appetite 99th percentile (historically predicts below-avg 12m returns). AAII bulls elevated. Put/Call ratio low (complacency).
+BREADTH: Rotating OUT of mega-cap tech INTO defense/industrials. Majority of SPX stocks UP even as Nasdaq fell.
+SECTORS: AI infra: CoreWeave and Nebius plummeted on Meta cloud entry. NVDA topping. Meta surged. Defense: AVAV +5% on $500M Army contract. Oil <$70.
+PE/M&A: H1 deal volume -34%, avg deal size 4x larger. Dry powder record. 16000+ portfolio cos held 4+ yrs. Blackstone $25B PA infra. Apollo $3.5B xAI.
+GEOPOLITICAL: Iran ceasefire uncertain. Strait of Hormuz risk. China PMI 49.3 contracting. Dollar DXY 103.8. Gold $3142.
+GLOBAL: EU PMI 49.1 contraction. Japan BOJ holding. Bitcoin $97.2K. Copper $4.38 signaling mild deceleration.
+EARNINGS: Q2 season starts July 7+. FactSet 23.1% YoY growth consensus. Apple July 30. Banks week of July 14.
+KEY RISKS: Iran escalation oil spike; AI valuation reset; PE liquidity crunch; FOMC hawkish surprise July 28-29.
+KEY TAILWINDS: AI infra spend; defense surge; earnings 23%+; manufacturing expansion; broad rotation.`;
 const HORIZONS=[
 {id:"today",label:"Today",sub:"Jul 4 Holiday",icon:"⚡",color:"#00d4ff"},
 {id:"tomorrow",label:"Tomorrow",sub:"Jul 7 Open",icon:"🌅",color:"#7b61ff"},
@@ -47,96 +60,265 @@ const HORIZONS=[
 {id:"year",label:"Full Year",sub:"2026 Outlook",icon:"🌐",color:"#ef476f"},
 ];
 const LENSES=[
-{id:"macro",label:"Macro",icon:"🏛"},
-{id:"labor",label:"Labor",icon:"👷"},
-{id:"pe",label:"PE/M&A",icon:"💼"},
-{id:"sent",label:"Sentiment",icon:"🧠"},
-{id:"sector",label:"Sectors",icon:"🏭"},
-{id:"geo",label:"Geo",icon:"🌍"},
+{id:"macro",label:"Macro",icon:"🏛"},{id:"labor",label:"Labor",icon:"👷"},
+{id:"pe",label:"PE/M&A",icon:"💼"},{id:"sentiment",label:"Sentiment",icon:"🧠"},
+{id:"sector",label:"Sectors",icon:"🏭"},{id:"geo",label:"Geo",icon:"🌍"},
+{id:"credit",label:"Credit",icon:"📉"},{id:"global",label:"Global",icon:"🌏"},
 ];
 const TICKERS=[
 {s:"SPX",v:"5,831",c:"-0.42%",up:false},{s:"NDX",v:"20,447",c:"-1.21%",up:false},
 {s:"DJI",v:"42,912",c:"+0.76%",up:true},{s:"VIX",v:"18.4",c:"+2.1",up:false},
-{s:"10YR",v:"4.38%",c:"+3bp",up:false},{s:"OIL",v:"$68.4",c:"-0.8%",up:true},
-{s:"GOLD",v:"$3,142",c:"+0.3%",up:true},{s:"SOX",v:"5,114",c:"-7.2%",up:false},
-{s:"FED",v:"3.625%",c:"HOLD",up:true},
+{s:"10YR",v:"4.38%",c:"+3bp",up:false},{s:"2YR",v:"4.56%",c:"+2bp",up:false},
+{s:"OIL",v:"$68.4",c:"-0.8%",up:true},{s:"GOLD",v:"$3,142",c:"+0.3%",up:true},
+{s:"COPPER",v:"$4.38",c:"-0.4%",up:false},{s:"SOX",v:"5,114",c:"-7.2%",up:false},
+{s:"FED",v:"3.625%",c:"HOLD",up:true},{s:"DXY",v:"103.8",c:"+0.2%",up:false},
 ];
-const MACRO=[
-{l:"Fed Rate",v:"3.50-3.75%",c:"#ffd166"},
-{l:"CPI YoY",v:">4.0%",c:"#ef476f"},
-{l:"Payrolls",v:"+57K miss",c:"#ef476f"},
-{l:"ISM Mfg",v:"53.3",c:"#06d6a0"},
-{l:"PE Dry Powder",v:"Record",c:"#7b61ff"},
-{l:"GS SPX Target",v:"8,000",c:"#06d6a0"},
-{l:"SOX 2-Day",v:"-12%",c:"#ef476f"},
-{l:"Oil WTI",v:"$68.4",c:"#ffd166"},
+const INDICATORS=[
+{label:"Fear/Greed",value:72,color:"#06d6a0",sub:"GREED",spark:[45,52,58,61,67,70,68,72,72]},
+{label:"Yield Curve",value:32,color:"#ffd166",sub:"-18bps INV",spark:[65,60,52,45,38,34,31,33,32]},
+{label:"Credit Spread",value:45,color:"#ffd166",sub:"IG+85bp",spark:[30,32,35,38,42,44,43,46,45]},
+{label:"Mkt Breadth",value:61,color:"#06d6a0",sub:">200MA 61%",spark:[45,48,52,55,58,60,62,60,61]},
+{label:"Put/Call",value:25,color:"#ef476f",sub:"COMPLACENT",spark:[60,55,50,45,38,30,28,26,25]},
+{label:"Insider Flow",value:30,color:"#ef476f",sub:"NET SELLERS",spark:[60,55,48,42,38,34,31,30,30]},
+{label:"ISM Mfg",value:68,color:"#06d6a0",sub:"53.3 EXP",spark:[40,45,50,55,60,62,65,67,68]},
+{label:"Dr. Copper",value:44,color:"#ffd166",sub:"$4.38 ↓",spark:[65,62,58,54,50,48,45,44,44]},
+{label:"GS Risk App",value:99,color:"#ef476f",sub:"99TH PCT",spark:[60,65,70,75,80,85,90,95,99]},
+{label:"PE Dry Powder",value:85,color:"#7b61ff",sub:"RECORD HIGH",spark:[60,65,68,70,72,75,78,82,85]},
 ];
-const CATS=[
-{d:"Jul 7+",e:"Q2 Earnings Season",hot:true},
-{d:"Jul 28-29",e:"FOMC Meeting",hot:true},
-{d:"Jul 30",e:"Apple Q2 Earnings",hot:true},
-{d:"Aug",e:"CPI Print",hot:true},
-{d:"Dec",e:"Fed Hike 100% priced",hot:true},
-];
-const SC={BULLISH:"#06d6a0",CAUTIOUS:"#ffd166",BEARISH:"#ef476f",NEUTRAL:"#8ba0c4"};
 function buildPrompt(hz,ln){
-const hl={today:"TODAY Jul 4 2026 markets closed",tomorrow:"TOMORROW Jul 7 2026 first day back",thisweek:"THIS WEEK Jul 7-11 2026",nextweek:"NEXT WEEK Jul 14-18 2026",thismonth:"THIS MONTH July 2026",nextmonth:"NEXT MONTH August 2026",thisqtr:"THIS QUARTER Q3 2026",nextqtr:"NEXT QUARTER Q4 2026",year:"FULL YEAR 2026 OUTLOOK"};
-const lf=ln?`FOCUS: Emphasize ${ln.toUpperCase()} lens.`:"";
-return `${CTX}\n${lf}\nBrief for: ${hl[hz]}\n\nUse EXACTLY these headers:\n## SIGNAL: [BULLISH or CAUTIOUS or BEARISH or NEUTRAL]\n## CONVICTION: [number]%\n## HEADLINE\n[one sentence]\n## KEY DRIVERS\n🟢 [bullish]\n🔴 [bearish]\n🟡 [mixed]\n## PROBABILITY SCENARIOS\n🎯 BASE CASE (XX%): [description]\n⬆️ BULL CASE (XX%): [description]\n⬇️ BEAR CASE (XX%): [description]\n## WATCH LIST\n1. [item]\n2. [item]\n3. [item]\n## PE INTEL\n[1-2 sentences]\n## TACTICAL CALL\n[one sentence]`;
+const hl={today:"TODAY July 4 2026 markets closed - positioning for Monday open",tomorrow:"TOMORROW July 7 2026 first trading day back - gap risk and positioning",thisweek:"THIS WEEK July 7-11 2026 Q2 earnings kickoff ISM Services bank earnings",nextweek:"NEXT WEEK July 14-18 2026 peak bank earnings mid-cycle check retail sales",thismonth:"THIS MONTH July 2026 FOMC July 28-29 Apple earnings July 30 Q2 earnings season",nextmonth:"NEXT MONTH August 2026 CPI print Jackson Hole Q2 earnings wrap seasonal weakness",thisqtr:"THIS QUARTER Q3 2026 July through September Fed path earnings trajectory Iran",nextqtr:"NEXT QUARTER Q4 2026 Fed December hike holiday spending year-end positioning",year:"FULL YEAR 2026 OUTLOOK strategic positioning across all asset classes"};
+const lf=ln?`\nSPECIAL FOCUS: Deep dive the ${ln.toUpperCase()} lens with extra specificity.`:"";
+return `${CTX}${lf}\n\nTASK: Institutional brief for: ${hl[hz]}\n\nRespond with EXACTLY these headers:\n## SIGNAL: [BULLISH or CAUTIOUS or BEARISH or NEUTRAL]\n## CONVICTION: [number 1-99]%\n## BULL_PROB: [number 1-99]%\n## BEAR_PROB: [number 1-99]%\n## EXPECTED_MOVE: [like +1.2% to -2.8%]\n## HEADLINE\n[one surgical sentence]\n## KEY DRIVERS\n🟢 [bullish with data]\n🔴 [bearish with data]\n🟡 [mixed with data]\n🟢 [additional bullish]\n🔴 [additional bearish]\n## PROBABILITY SCENARIOS\n🎯 BASE CASE (XX%): [outcome with price targets]\n⬆️ BULL CASE (XX%): [outcome with price targets]\n⬇️ BEAR CASE (XX%): [outcome with price targets]\n## WATCH LIST\n1. [specific level/date/threshold]\n2. [specific level/date/threshold]\n3. [specific level/date/threshold]\n## SECTOR ROTATION\n[overweight and underweight with reasoning]\n## PE INTEL\n[2-3 sentences PE/M&A implications]\n## RISK MATRIX\nHIGH: [top risk with probability]\nMEDIUM: [medium risk]\nLOW: [tail risk]\n## TACTICAL CALL\n[one direct specific sentence]\nBe surgical. Goldman Sachs morning note meets BlackRock Investment Institute.`;
 }
 function parse(t){
 if(!t)return null;
 const g=(lbl)=>{const r=new RegExp(`## ${lbl}[^\\n]*\\n([\\s\\S]*?)(?=\\n## |$)`,"i");const m=t.match(r);return m?m[1].trim():"";};
 const s=t.match(/## SIGNAL:\s*([A-Z]+)/i);
-const c=t.match(/## CONVICTION:\s*(\d+)/i);
-return{signal:s?s[1].toUpperCase():"",conviction:c?c[1]:"",headline:g("HEADLINE"),drivers:g("KEY DRIVERS"),scenarios:g("PROBABILITY SCENARIOS"),watchlist:g("WATCH LIST"),peIntel:g("PE INTEL"),tactical:g("TACTICAL CALL")};
+const cv=t.match(/## CONVICTION:\s*(\d+)/i);
+const bp=t.match(/## BULL_PROB:\s*(\d+)/i);
+const brp=t.match(/## BEAR_PROB:\s*(\d+)/i);
+const em=t.match(/## EXPECTED_MOVE:\s*([^\n]+)/i);
+return{signal:s?s[1].toUpperCase():"",conviction:cv?parseInt(cv[1]):50,bullProb:bp?parseInt(bp[1]):40,bearProb:brp?parseInt(brp[1]):30,expectedMove:em?em[1].trim():"",headline:g("HEADLINE"),drivers:g("KEY DRIVERS"),scenarios:g("PROBABILITY SCENARIOS"),watchlist:g("WATCH LIST"),sectorRotation:g("SECTOR ROTATION"),peIntel:g("PE INTEL"),riskMatrix:g("RISK MATRIX"),tactical:g("TACTICAL CALL")};
 }
-function Sparkline({data,color}){
-const W=68,H=24,mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1;
-const pts=data.map((v,i)=>`${(i/(data.length-1))*W},${H-((v-mn)/rng)*H}`).join(" ");
+const SC={BULLISH:"#06d6a0",CAUTIOUS:"#ffd166",BEARISH:"#ef476f",NEUTRAL:"#8ba0c4"};
+function Sparkline({data,color,width=70,height=24}){
+const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1;
+const pts=data.map((v,i)=>`${(i/(data.length-1))*width},${height-((v-mn)/rng)*height}`).join(" ");
 const lp=pts.split(" ").at(-1).split(",");
-return<svg width={W} height={H} style={{overflow:"visible",display:"block"}}><polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/><circle cx={lp[0]} cy={lp[1]} r="2.5" fill={color}/></svg>;
+const trend=data[data.length-1]>data[0];
+return<svg width={width} height={height} style={{overflow:"visible",display:"block"}}>
+<polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+<circle cx={lp[0]} cy={lp[1]} r="2.5" fill={color}/>
+<text x={width-2} y={height/2} textAnchor="end" fontSize="8" fill={trend?"#06d6a0":"#ef476f"} fontFamily="monospace">{trend?"▲":"▼"}</text>
+</svg>;
 }
-function Gauge({v}){
-const a=-135+(v/100)*270,c=v<33?"#ef476f":v<66?"#ffd166":"#06d6a0";
-const lb=v<33?"FEAR":v<55?"NEUTRAL":v<78?"GREED":"EXTR GREED";
-return<div style={{textAlign:"center"}}><svg viewBox="0 0 110 65" width="110" height="65"><defs><linearGradient id="gg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#ef476f"/><stop offset="50%" stopColor="#ffd166"/><stop offset="100%" stopColor="#06d6a0"/></linearGradient></defs><path d="M8 60 A46 46 0 0 1 102 60" fill="none" stroke="#1e2535" strokeWidth="9" strokeLinecap="round"/><path d="M8 60 A46 46 0 0 1 102 60" fill="none" stroke="url(#gg)" strokeWidth="6" strokeLinecap="round"/><g transform={`translate(55,60) rotate(${a})`}><line x1="0" y1="0" x2="0" y2="-40" stroke={c} strokeWidth="2" strokeLinecap="round"/><circle r="3" fill={c}/></g><text x="55" y="57" textAnchor="middle" fill={c} fontSize="9" fontWeight="800" fontFamily="monospace">{v}</text></svg><div style={{fontSize:8,letterSpacing:2,color:c,fontWeight:800,fontFamily:"monospace",marginTop:-4}}>{lb}</div></div>;
+function BigGauge({value,label,color,size=140}){
+const angle=-135+(value/100)*270;
+const c=color||(value<33?"#ef476f":value<55?"#ffd166":value<78?"#06d6a0":"#00d4ff");
+return<div style={{textAlign:"center"}}>
+<svg viewBox="0 0 140 90" width={size} height={size*0.65}>
+<defs><linearGradient id={`g${label}`} x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#ef476f"/><stop offset="50%" stopColor="#ffd166"/><stop offset="100%" stopColor="#06d6a0"/></linearGradient></defs>
+<path d="M12 80 A58 58 0 0 1 128 80" fill="none" stroke="#0d1e32" strokeWidth="14" strokeLinecap="round"/>
+<path d="M12 80 A58 58 0 0 1 128 80" fill="none" stroke={`url(#g${label})`} strokeWidth="10" strokeLinecap="round"/>
+<g transform={`translate(70,80) rotate(${angle})`}>
+<line x1="0" y1="4" x2="0" y2="-50" stroke={c} strokeWidth="2.5" strokeLinecap="round"/>
+<circle r="5" fill={c}/>
+</g>
+<text x="70" y="76" textAnchor="middle" fill={c} fontSize="16" fontWeight="900" fontFamily="monospace">{value}%</text>
+</svg>
+<div style={{fontSize:9,letterSpacing:2,color:c,fontWeight:800,fontFamily:"monospace",marginTop:-4}}>{label}</div>
+</div>;
+}
+function ConvictionBar({label,value,color,showArrow}){
+const c=color||(value>65?"#06d6a0":value>45?"#ffd166":"#ef476f");
+return<div style={{marginBottom:8}}>
+<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+<span style={{fontSize:9,color:"#5a7090",fontFamily:"monospace"}}>{label}</span>
+<span style={{fontSize:10,fontWeight:700,color:c,fontFamily:"monospace"}}>{showArrow&&(value>50?"▲ ":"▼ ")}{value}%</span>
+</div>
+<div style={{height:5,background:"#0d1e32",borderRadius:3,overflow:"hidden"}}>
+<div style={{height:"100%",width:`${value}%`,background:`linear-gradient(90deg,${c}80,${c})`,borderRadius:3,transition:"width 1s ease"}}/>
+</div>
+</div>;
+}
+function SignalMeter({signal,conviction,bullProb,bearProb,expectedMove,horizonColor}){
+const sc=SC[signal]||"#8ba0c4";
+const neutralProb=Math.max(0,100-bullProb-bearProb);
+return<div style={{background:"#060f20",border:`1px solid ${sc}30`,borderRadius:10,padding:16,marginBottom:12}}>
+<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
+<div>
+<div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontFamily:"monospace",marginBottom:4}}>APEX SIGNAL</div>
+<div style={{display:"flex",alignItems:"center",gap:10}}>
+<span style={{fontSize:22,fontWeight:900,fontFamily:"monospace",color:sc}}>{signal||"—"}</span>
+<div style={{width:1,height:24,background:"#0d1e32"}}/>
+<div>
+<div style={{fontSize:10,color:"#3d5a7a",fontFamily:"monospace"}}>CONVICTION</div>
+<div style={{fontSize:18,fontWeight:900,fontFamily:"monospace",color:horizonColor}}>{conviction}%</div>
+</div>
+</div>
+</div>
+{expectedMove&&<div style={{textAlign:"right"}}>
+<div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontFamily:"monospace",marginBottom:4}}>EXPECTED MOVE</div>
+<div style={{fontSize:16,fontWeight:800,fontFamily:"monospace",color:"#c5d8f0"}}>{expectedMove}</div>
+</div>}
+</div>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+<div style={{textAlign:"center",background:"#06d6a015",border:"1px solid #06d6a030",borderRadius:6,padding:8}}>
+<div style={{fontSize:8,color:"#06d6a0",fontFamily:"monospace",letterSpacing:1,marginBottom:4}}>BULL</div>
+<div style={{fontSize:20,fontWeight:900,fontFamily:"monospace",color:"#06d6a0"}}>{bullProb}%</div>
+</div>
+<div style={{textAlign:"center",background:"#8ba0c415",border:"1px solid #8ba0c430",borderRadius:6,padding:8}}>
+<div style={{fontSize:8,color:"#8ba0c4",fontFamily:"monospace",letterSpacing:1,marginBottom:4}}>NEUTRAL</div>
+<div style={{fontSize:20,fontWeight:900,fontFamily:"monospace",color:"#8ba0c4"}}>{neutralProb}%</div>
+</div>
+<div style={{textAlign:"center",background:"#ef476f15",border:"1px solid #ef476f30",borderRadius:6,padding:8}}>
+<div style={{fontSize:8,color:"#ef476f",fontFamily:"monospace",letterSpacing:1,marginBottom:4}}>BEAR</div>
+<div style={{fontSize:20,fontWeight:900,fontFamily:"monospace",color:"#ef476f"}}>{bearProb}%</div>
+</div>
+</div>
+<div style={{height:8,background:"#0d1e32",borderRadius:4,overflow:"hidden",display:"flex"}}>
+<div style={{height:"100%",width:`${bullProb}%`,background:"linear-gradient(90deg,#06d6a080,#06d6a0)",transition:"width 1s ease"}}/>
+<div style={{height:"100%",width:`${neutralProb}%`,background:"#8ba0c430"}}/>
+<div style={{height:"100%",width:`${bearProb}%`,background:"linear-gradient(90deg,#ef476f80,#ef476f)",transition:"width 1s ease"}}/>
+</div>
+<div style={{display:"flex",justifyContent:"space-between",marginTop:3}}>
+<span style={{fontSize:7,color:"#06d6a0",fontFamily:"monospace"}}>BULL {bullProb}%</span>
+<span style={{fontSize:7,color:"#8ba0c4",fontFamily:"monospace"}}>NEUTRAL {neutralProb}%</span>
+<span style={{fontSize:7,color:"#ef476f",fontFamily:"monospace"}}>BEAR {bearProb}%</span>
+</div>
+</div>;
+}
+function IndicatorGrid(){
+return<div>
+<div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,fontFamily:"monospace",marginBottom:12}}>MARKET INDICATORS DASHBOARD</div>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+{INDICATORS.map(ind=>(
+<div key={ind.label} style={{background:"#060f20",border:"1px solid #0d1e32",borderRadius:8,padding:12}}>
+<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+<div>
+<div style={{fontSize:9,color:"#3d5a7a",fontFamily:"monospace",marginBottom:2}}>{ind.label}</div>
+<div style={{fontSize:11,fontWeight:700,color:ind.color,fontFamily:"monospace"}}>{ind.sub}</div>
+</div>
+<Sparkline data={ind.spark} color={ind.color} width={50} height={22}/>
+</div>
+<div style={{height:5,background:"#0d1e32",borderRadius:3,overflow:"hidden",marginBottom:4}}>
+<div style={{height:"100%",width:`${ind.value}%`,background:ind.color,borderRadius:3,opacity:0.85}}/>
+</div>
+<div style={{display:"flex",justifyContent:"space-between"}}>
+<span style={{fontSize:8,color:"#2d4060",fontFamily:"monospace"}}>0</span>
+<span style={{fontSize:8,fontWeight:700,color:ind.color,fontFamily:"monospace"}}>{ind.value}</span>
+<span style={{fontSize:8,color:"#2d4060",fontFamily:"monospace"}}>100</span>
+</div>
+</div>
+))}
+</div>
+</div>;
+}
+function AccuracyTracker(){
+const[history,setHistory]=useState(()=>{try{return JSON.parse(localStorage.getItem("apex_history")||"[]");}catch{return[];}});
+const[showAdd,setShowAdd]=useState(false);
+const[form,setForm]=useState({horizon:"tomorrow",signal:"BULLISH",result:"correct",note:""});
+const save=(entry)=>{
+const h=[{...entry,id:Date.now(),timestamp:new Date().toISOString()},...history].slice(0,100);
+setHistory(h);localStorage.setItem("apex_history",JSON.stringify(h));setShowAdd(false);
+};
+const total=history.length;
+const correct=history.filter(h=>h.result==="correct").length;
+const partial=history.filter(h=>h.result==="partial").length;
+const accuracy=total>0?Math.round((correct+partial*0.5)/total*100):0;
+const byHorizon=HORIZONS.map(h=>({...h,total:history.filter(x=>x.horizon===h.id).length,correct:history.filter(x=>x.horizon===h.id&&x.result==="correct").length,partial:history.filter(x=>x.horizon===h.id&&x.result==="partial").length})).filter(h=>h.total>0);
+return<div style={{background:"#060f20",border:"1px solid #0d1e32",borderRadius:8,padding:14,marginBottom:12}}>
+<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+<div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,fontFamily:"monospace"}}>📊 PREDICTION ACCURACY TRACKER</div>
+<button onClick={()=>setShowAdd(!showAdd)} style={{padding:"4px 10px",background:"#7b61ff18",border:"1px solid #7b61ff40",borderRadius:5,color:"#7b61ff",fontSize:9,cursor:"pointer",fontFamily:"monospace",fontWeight:700}}>+ LOG RESULT</button>
+</div>
+{total>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12}}>
+{[{label:"TOTAL",value:total,color:"#c5d8f0"},{label:"ACCURACY",value:accuracy+"%",color:accuracy>65?"#06d6a0":accuracy>45?"#ffd166":"#ef476f"},{label:"CORRECT",value:correct,color:"#06d6a0"},{label:"PARTIAL",value:partial,color:"#ffd166"}].map(s=>(
+<div key={s.label} style={{textAlign:"center",background:"#030c1a",borderRadius:5,padding:8}}>
+<div style={{fontSize:16,fontWeight:900,fontFamily:"monospace",color:s.color}}>{s.value}</div>
+<div style={{fontSize:7,color:"#2d4060",fontFamily:"monospace",letterSpacing:2}}>{s.label}</div>
+</div>))}
+</div>}
+{byHorizon.length>0&&<div style={{marginBottom:12}}>
+<div style={{fontSize:8,color:"#2d4060",fontFamily:"monospace",letterSpacing:2,marginBottom:8}}>ACCURACY BY HORIZON</div>
+{byHorizon.map(h=>{const acc=Math.round((h.correct+h.partial*0.5)/h.total*100);return<div key={h.id} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+<span style={{fontSize:9,color:h.color,fontFamily:"monospace",width:80,flexShrink:0}}>{h.icon} {h.label}</span>
+<div style={{flex:1,height:5,background:"#0d1e32",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${acc}%`,background:acc>65?"#06d6a0":acc>45?"#ffd166":"#ef476f",borderRadius:2}}/></div>
+<span style={{fontSize:9,fontWeight:700,color:"#8ba0c4",fontFamily:"monospace",width:32}}>{acc}%</span>
+<span style={{fontSize:8,color:"#3d5a7a",fontFamily:"monospace"}}>{h.total}x</span>
+</div>;})}
+</div>}
+{showAdd&&<div style={{background:"#030c1a",borderRadius:6,padding:12,border:"1px solid #1a2a40",marginBottom:12}}>
+<div style={{fontSize:9,color:"#2d4060",fontFamily:"monospace",letterSpacing:2,marginBottom:8}}>LOG PREDICTION RESULT</div>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+<div>
+<div style={{fontSize:8,color:"#3d5a7a",fontFamily:"monospace",marginBottom:4}}>HORIZON</div>
+<select value={form.horizon} onChange={e=>setForm({...form,horizon:e.target.value})} style={{width:"100%",background:"#060f20",border:"1px solid #1a2a40",borderRadius:4,padding:"5px 8px",color:"#c5d8f0",fontSize:10,fontFamily:"monospace"}}>
+{HORIZONS.map(h=><option key={h.id} value={h.id}>{h.label}</option>)}
+</select>
+</div>
+<div>
+<div style={{fontSize:8,color:"#3d5a7a",fontFamily:"monospace",marginBottom:4}}>RESULT</div>
+<select value={form.result} onChange={e=>setForm({...form,result:e.target.value})} style={{width:"100%",background:"#060f20",border:"1px solid #1a2a40",borderRadius:4,padding:"5px 8px",color:"#c5d8f0",fontSize:10,fontFamily:"monospace"}}>
+<option value="correct">✅ Correct</option>
+<option value="partial">🟡 Partial</option>
+<option value="wrong">❌ Wrong</option>
+</select>
+</div>
+</div>
+<input value={form.note} onChange={e=>setForm({...form,note:e.target.value})} placeholder="Notes (optional)" style={{width:"100%",background:"#060f20",border:"1px solid #1a2a40",borderRadius:4,padding:"5px 8px",color:"#c5d8f0",fontSize:10,fontFamily:"monospace",marginBottom:8}}/>
+<div style={{display:"flex",gap:8}}>
+<button onClick={()=>save(form)} style={{flex:1,padding:"6px",background:"#06d6a018",border:"1px solid #06d6a040",borderRadius:5,color:"#06d6a0",fontSize:10,cursor:"pointer",fontFamily:"monospace",fontWeight:700}}>SAVE</button>
+<button onClick={()=>setShowAdd(false)} style={{flex:1,padding:"6px",background:"#ef476f18",border:"1px solid #ef476f40",borderRadius:5,color:"#ef476f",fontSize:10,cursor:"pointer",fontFamily:"monospace",fontWeight:700}}>CANCEL</button>
+</div>
+</div>}
+{history.length>0&&!showAdd&&<div>
+<div style={{fontSize:8,color:"#2d4060",fontFamily:"monospace",letterSpacing:2,marginBottom:6}}>RECENT PREDICTIONS</div>
+{history.slice(0,6).map(h=>(
+<div key={h.id} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:"1px solid #0d1e3230"}}>
+<span style={{fontSize:12}}>{h.result==="correct"?"✅":h.result==="partial"?"🟡":"❌"}</span>
+<div style={{flex:1}}>
+<div style={{fontSize:10,color:"#c5d8f0",fontFamily:"monospace"}}>{HORIZONS.find(x=>x.id===h.horizon)?.label} — {h.signal}</div>
+{h.note&&<div style={{fontSize:9,color:"#3d5a7a"}}>{h.note}</div>}
+</div>
+<div style={{fontSize:8,color:"#2d4060",fontFamily:"monospace"}}>{new Date(h.timestamp).toLocaleDateString()}</div>
+</div>))}
+</div>}
+{total===0&&!showAdd&&<div style={{textAlign:"center",padding:"24px 0",color:"#2d4060",fontSize:11}}>No predictions logged yet. Generate a brief then log the result after the horizon passes to build your accuracy score.</div>}
+</div>;
 }
 function KeyEntry({onSave}){
 const[k,setK]=useState("");
 const[err,setErr]=useState("");
 const save=()=>{
 if(!k.startsWith("sk-ant-")){setErr("Key must start with sk-ant-");return;}
-if(k.length<50){setErr("Key looks too short — copy the full key");return;}
-localStorage.setItem("apex_key",k.trim());
-onSave(k.trim());
+if(k.length<50){setErr("Key looks too short");return;}
+localStorage.setItem("apex_key",k.trim());onSave(k.trim());
 };
-return(
-<div style={{minHeight:"100vh",background:"#020912",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+return<div style={{minHeight:"100vh",background:"#020912",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
 <div style={{width:"100%",maxWidth:480,background:"#060f20",border:"1px solid #0d1e32",borderRadius:12,padding:32}}>
-<div style={{fontFamily:"monospace",fontWeight:900,fontSize:28,letterSpacing:4,background:"linear-gradient(90deg,#00d4ff,#7b61ff)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>APEX</div>
-<div style={{fontSize:11,color:"#3d5a7a",fontFamily:"monospace",letterSpacing:2,marginBottom:24}}>MARKET INTELLIGENCE SYSTEM</div>
-<div style={{fontSize:13,color:"#8ba0c4",marginBottom:20,lineHeight:1.6}}>Enter your Anthropic API key to activate APEX. Your key is stored only in your browser and never sent anywhere except directly to Anthropic.</div>
-<div style={{fontSize:10,color:"#3d5a7a",fontFamily:"monospace",letterSpacing:2,marginBottom:8}}>API KEY</div>
-<input type="password" value={k} onChange={e=>setK(e.target.value)} onKeyDown={e=>e.key==="Enter"&&save()} placeholder="sk-ant-api03-..." style={{width:"100%",background:"#030c1a",border:"1px solid #1a2a40",borderRadius:6,padding:"10px 12px",color:"#c5d8f0",fontFamily:"monospace",fontSize:12,marginBottom:8,outline:"none"}}/>
+<div style={{fontFamily:"monospace",fontWeight:900,fontSize:28,letterSpacing:4,background:"linear-gradient(90deg,#00d4ff,#7b61ff)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>APEX</div>
+<div style={{fontSize:10,color:"#3d5a7a",fontFamily:"monospace",letterSpacing:2,marginBottom:20}}>MARKET INTELLIGENCE v4.0</div>
+<div style={{fontSize:9,color:"#3d5a7a",fontFamily:"monospace",letterSpacing:2,marginBottom:6}}>ANTHROPIC API KEY</div>
+<input type="password" value={k} onChange={e=>setK(e.target.value)} onKeyDown={e=>e.key==="Enter"&&save()} placeholder="sk-ant-api03-..." style={{width:"100%",background:"#030c1a",border:"1px solid #1a2a40",borderRadius:6,padding:"10px 12px",color:"#c5d8f0",fontFamily:"monospace",fontSize:12,marginBottom:8}}/>
 {err&&<div style={{color:"#ef476f",fontSize:11,marginBottom:8,fontFamily:"monospace"}}>{err}</div>}
-<button onClick={save} style={{width:"100%",padding:"11px",background:"linear-gradient(90deg,#00d4ff20,#7b61ff20)",border:"1px solid #7b61ff",borderRadius:6,color:"#7b61ff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"monospace",letterSpacing:2,marginBottom:20}}>ACTIVATE APEX →</button>
-<div style={{fontSize:10,color:"#2d4060",lineHeight:1.6}}>Get your key at <span style={{color:"#7b61ff"}}>platform.anthropic.com</span> → API Keys → Create Key. Cost: ~$0.01-0.03 per brief.</div>
+<button onClick={save} style={{width:"100%",padding:"12px",background:"linear-gradient(90deg,#00d4ff15,#7b61ff25)",border:"1px solid #7b61ff",borderRadius:6,color:"#7b61ff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"monospace",letterSpacing:2,marginBottom:16}}>ACTIVATE APEX →</button>
+<div style={{fontSize:9,color:"#2d4060",lineHeight:1.7}}>Get your key: <span style={{color:"#7b61ff"}}>platform.anthropic.com</span> → API Keys → Create Key. Cost: ~$0.01-0.03 per brief.</div>
 </div>
-</div>
-);
+</div>;
 }
 function App(){
 const[apiKey,setApiKey]=useState(()=>localStorage.getItem("apex_key")||"");
 const[hz,setHz]=useState("tomorrow");
 const[ln,setLn]=useState(null);
+const[tab,setTab]=useState("brief");
 const[cache,setCache]=useState({});
 const[loading,setLoading]=useState(false);
 const[error,setError]=useState(null);
 const[ts,setTs]=useState(null);
 const[menu,setMenu]=useState(false);
-const[isMobile,setIsMobile]=useState(window.innerWidth<768);
-useEffect(()=>{const h=()=>setIsMobile(window.innerWidth<768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
+const[isMobile,setIsMobile]=useState(window.innerWidth<900);
+useEffect(()=>{const h=()=>setIsMobile(window.innerWidth<900);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
 const key=hz+"__"+(ln||"all");
 const H=HORIZONS.find(x=>x.id===hz);
 const P=parse(cache[key]||"");
@@ -146,51 +328,53 @@ if(!apiKey)return;
 if(cache[key]&&!force)return;
 setLoading(true);setError(null);
 try{
-const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:buildPrompt(hz,ln)}]})});
+const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1500,messages:[{role:"user",content:buildPrompt(hz,ln)}]})});
 if(!r.ok){const e=await r.json();throw new Error(e.error?.message||"HTTP "+r.status);}
 const d=await r.json();
 const t=(d.content||[]).map(b=>b.text||"").join("");
 if(!t)throw new Error("Empty response");
-setCache(p=>({...p,[key]:t}));
-setTs(new Date());
-}catch(e){
-if(e.message.includes("auth")||e.message.includes("key")||e.message.includes("credential")){setError("Invalid API key. Click Change Key to update it.");}
-else{setError(e.message);}
-}finally{setLoading(false);}
+setCache(p=>({...p,[key]:t}));setTs(new Date());
+}catch(e){setError(e.message.includes("auth")||e.message.includes("key")||e.message.includes("credential")?"Invalid API key — click Change Key below.":e.message);}
+finally{setLoading(false);}
 },[hz,ln,key,cache,apiKey]);
-useEffect(()=>{if(apiKey)go();},[hz,ln,apiKey]);
-if(!apiKey)return <KeyEntry onSave={setApiKey}/>;
+useEffect(()=>{if(apiKey&&tab==="brief")go();},[hz,ln,apiKey]);
+if(!apiKey)return<KeyEntry onSave={setApiKey}/>;
 const spx=[5610,5720,5830,5780,5710,5660,5710,5800,5831];
 const vix=[12.1,13.4,11.8,14.2,17.1,20.3,18.9,17.2,18.4];
 const oil=[82,78,71,65,63,68,70,67,68.4];
-const card={background:"#060f20",border:"1px solid #0d1e32",borderRadius:7,padding:13,marginBottom:11};
-const lbl={fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,fontFamily:"monospace",marginBottom:7};
-const b2={fontSize:11,lineHeight:1.75,color:"#7a90b0",whiteSpace:"pre-wrap"};
+const yc=[10,8,5,2,-2,-8,-14,-18,-18];
+const card={background:"#060f20",border:"1px solid #0d1e32",borderRadius:8,padding:14,marginBottom:12};
+const lbl={fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,fontFamily:"monospace",marginBottom:8};
+const b2={fontSize:12,lineHeight:1.8,color:"#8ba0c4",whiteSpace:"pre-wrap"};
 const SidebarInner=()=>(<>
-<div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,padding:"13px 12px 6px",fontFamily:"monospace"}}>TIME HORIZONS</div>
+<div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,padding:"14px 12px 6px",fontFamily:"monospace"}}>TIME HORIZONS</div>
 {HORIZONS.map(hh=>(<button key={hh.id} onClick={()=>{setHz(hh.id);setMenu(false);}} style={{width:"100%",background:hz===hh.id?`${hh.color}14`:"transparent",border:"none",borderLeft:`3px solid ${hz===hh.id?hh.color:"transparent"}`,padding:"9px 12px",cursor:"pointer",textAlign:"left"}}>
-<div style={{display:"flex",alignItems:"center",gap:7}}><span style={{fontSize:12}}>{hh.icon}</span><span style={{fontSize:11,fontWeight:700,color:hz===hh.id?hh.color:"#8ba0c4"}}>{hh.label}</span></div>
-<div style={{fontSize:8,color:"#2d4060",marginLeft:19,fontFamily:"monospace"}}>{hh.sub}</div>
+<div style={{display:"flex",alignItems:"center",gap:7}}><span style={{fontSize:13}}>{hh.icon}</span><span style={{fontSize:11,fontWeight:700,color:hz===hh.id?hh.color:"#8ba0c4"}}>{hh.label}</span></div>
+<div style={{fontSize:8,color:"#2d4060",marginLeft:20,fontFamily:"monospace"}}>{hh.sub}</div>
 </button>))}
 <div style={{borderTop:"1px solid #0d1e32",margin:"10px 0 8px",padding:"10px 12px 4px"}}>
 <div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,marginBottom:8,fontFamily:"monospace"}}>SIGNAL LENS</div>
 <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-{LENSES.map(l=>(<button key={l.id} onClick={()=>setLn(ln===l.id?null:l.id)} style={{padding:"5px 8px",borderRadius:5,border:`1px solid ${ln===l.id?"#7b61ff":"#0d1e32"}`,background:ln===l.id?"#7b61ff18":"transparent",color:ln===l.id?"#7b61ff":"#2d4060",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"monospace"}}>{l.icon} {l.label}</button>))}
+{LENSES.map(l=>(<button key={l.id} onClick={()=>setLn(ln===l.id?null:l.id)} style={{padding:"5px 8px",borderRadius:5,border:`1px solid ${ln===l.id?"#7b61ff":"#0d1e32"}`,background:ln===l.id?"#7b61ff18":"transparent",color:ln===l.id?"#7b61ff":"#2d4060",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"monospace"}}>{l.icon} {l.label}</button>))}
 </div>
 </div>
 </>);
 return(
 <div style={{minHeight:"100vh",background:"#020912",display:"flex",flexDirection:"column"}}>
-<div style={{height:48,background:"#030c1a",borderBottom:"1px solid #0d1e32",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 14px",flexShrink:0}}>
+<style>{`*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:#1a2a40;border-radius:2px}@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.fu{animation:fadeUp .35s ease forwards}@keyframes sh2{0%{background-position:-300px 0}100%{background-position:300px 0}}.sh{background:linear-gradient(90deg,#060f20 25%,#0d1e32 50%,#060f20 75%);background-size:300px 100%;animation:sh2 1.3s infinite;border-radius:3px;height:10px;margin-bottom:6px}button:focus,input:focus,select:focus{outline:none}`}</style>
+<div style={{height:50,background:"#030c1a",borderBottom:"1px solid #0d1e32",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 14px",flexShrink:0}}>
 <div style={{display:"flex",alignItems:"center",gap:10}}>
-<button onClick={()=>setMenu(!menu)} style={{background:"transparent",border:"1px solid #1a2a40",borderRadius:5,color:"#8ba0c4",fontSize:15,cursor:"pointer",padding:"3px 8px"}}>☰</button>
-<span style={{fontFamily:"monospace",fontWeight:900,fontSize:17,letterSpacing:4,background:"linear-gradient(90deg,#00d4ff,#7b61ff)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>APEX</span>
-<span style={{fontSize:9,color:"#2d4060",fontFamily:"monospace",letterSpacing:1}}>MARKET INTELLIGENCE</span>
+<button onClick={()=>setMenu(!menu)} style={{background:"transparent",border:"1px solid #1a2a40",borderRadius:5,color:"#8ba0c4",fontSize:15,cursor:"pointer",padding:"3px 8px",lineHeight:1.4}}>☰</button>
+<span style={{fontFamily:"monospace",fontWeight:900,fontSize:18,letterSpacing:4,background:"linear-gradient(90deg,#00d4ff,#7b61ff)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>APEX</span>
+<span style={{fontSize:9,color:"#2d4060",fontFamily:"monospace",letterSpacing:1}}>MARKET INTELLIGENCE v4.0</span>
 </div>
-<div style={{display:"flex",alignItems:"center",gap:10}}>
+<div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
 {ts&&<span style={{fontSize:8,color:"#2d4060",fontFamily:"monospace"}}>UPDATED {ts.toLocaleTimeString()}</span>}
-<button onClick={()=>{localStorage.removeItem("apex_key");setApiKey("");}} title="Change API Key" style={{background:"transparent",border:"1px solid #1a2a40",borderRadius:5,color:"#3d5a7a",fontSize:13,cursor:"pointer",padding:"2px 7px"}}>🔑</button>
-<span style={{fontSize:9,letterSpacing:2,color:"#ef476f",border:"1px solid #ef476f50",padding:"2px 6px",borderRadius:3,fontFamily:"monospace",animation:"pulse 2s infinite"}}>● LIVE</span>
+{["brief","accuracy","indicators"].map(t=>(
+<button key={t} onClick={()=>setTab(t)} style={{padding:"4px 8px",borderRadius:5,border:`1px solid ${tab===t?"#7b61ff":"#1a2a40"}`,background:tab===t?"#7b61ff20":"transparent",color:tab===t?"#7b61ff":"#3d5a7a",fontSize:9,cursor:"pointer",fontFamily:"monospace",fontWeight:700}}>
+{t==="brief"?"📊":t==="accuracy"?"🎯":"📈"} {t.toUpperCase()}
+</button>))}
+<span style={{fontSize:9,letterSpacing:2,color:"#ef476f",border:"1px solid #ef476f50",padding:"2px 6px",borderRadius:3,fontFamily:"monospace"}}>● LIVE</span>
 </div>
 </div>
 <div style={{height:28,background:"#050d1a",borderBottom:"1px solid #0d1e32",overflow:"hidden",display:"flex",alignItems:"center",flexShrink:0}}>
@@ -205,7 +389,7 @@ return(
 </div>
 <div style={{display:"flex",flex:1,overflow:"hidden",position:"relative"}}>
 {menu&&(<div style={{position:"fixed",inset:0,zIndex:200,display:"flex"}}>
-<div style={{width:220,background:"#030c1a",borderRight:"1px solid #1a2a40",overflowY:"auto"}}>
+<div style={{width:230,background:"#030c1a",borderRight:"1px solid #1a2a40",overflowY:"auto"}}>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",borderBottom:"1px solid #0d1e32"}}>
 <span style={{fontSize:9,color:"#2d4060",fontFamily:"monospace",letterSpacing:2}}>NAVIGATION</span>
 <button onClick={()=>setMenu(false)} style={{background:"transparent",border:"none",color:"#8ba0c4",fontSize:18,cursor:"pointer"}}>✕</button>
@@ -214,80 +398,86 @@ return(
 </div>
 <div style={{flex:1,background:"#00000070"}} onClick={()=>setMenu(false)}/>
 </div>)}
-{!isMobile&&<div style={{width:190,borderRight:"1px solid #0d1e32",background:"#030c1a",overflowY:"auto",flexShrink:0}}><SidebarInner/></div>}
+{!isMobile&&<div style={{width:200,borderRight:"1px solid #0d1e32",background:"#030c1a",overflowY:"auto",flexShrink:0}}><SidebarInner/></div>}
 <div style={{flex:1,overflowY:"auto",padding:isMobile?12:18}}>
+{tab==="indicators"&&<div className="fu"><IndicatorGrid/></div>}
+{tab==="accuracy"&&<div className="fu"><AccuracyTracker/></div>}
+{tab==="brief"&&<>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
 <div>
 <div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontFamily:"monospace",marginBottom:4}}>INTELLIGENCE BRIEF · {H?.sub?.toUpperCase()}</div>
-<div style={{fontSize:isMobile?17:20,fontWeight:700,color:"#e8f0ff",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+<div style={{fontSize:isMobile?18:22,fontWeight:700,color:"#e8f0ff",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
 <span style={{color:H?.color}}>{H?.icon}</span>{H?.label} Outlook
-{P?.signal&&<span style={{fontSize:10,fontWeight:800,letterSpacing:2,fontFamily:"monospace",padding:"2px 9px",borderRadius:4,border:`1px solid ${sc}`,background:`${sc}18`,color:sc}}>{P.signal}</span>}
 </div>
 </div>
-{P?.conviction&&<div style={{textAlign:"center",flexShrink:0,marginLeft:8}}>
-<div style={{fontSize:isMobile?22:28,fontWeight:900,fontFamily:"monospace",color:H?.color,lineHeight:1}}>{P.conviction}%</div>
-<div style={{fontSize:7,letterSpacing:2,color:"#2d4060",fontFamily:"monospace"}}>CONVICTION</div>
-</div>}
+<button onClick={()=>{setCache(p=>{const n={...p};delete n[key];return n;});setTimeout(()=>go(true),30);}} style={{padding:"6px 12px",background:"#0d1e32",border:"1px solid #1a2a40",borderRadius:5,color:"#7b61ff",fontSize:9,cursor:"pointer",fontFamily:"monospace",fontWeight:700,letterSpacing:1,flexShrink:0}}>↺ REFRESH</button>
 </div>
-{loading&&<div style={card}><div style={lbl}>ACQUIRING SIGNAL...</div>{[85,70,90,65,80].map((w,i)=><div key={i} className="sh" style={{width:`${w}%`}}/>)}</div>}
+{loading&&<div style={card}><div style={lbl}>ACQUIRING SIGNAL...</div>{[85,70,90,65,78,60].map((w,i)=><div key={i} className="sh" style={{width:`${w}%`}}/>)}</div>}
 {!loading&&error&&<div style={{...card,border:"1px solid #ef476f40"}}>
 <div style={{color:"#ef476f",marginBottom:8,fontSize:12}}>{error}</div>
 <button onClick={()=>go(true)} style={{padding:"6px 14px",background:"#ef476f18",border:"1px solid #ef476f40",borderRadius:5,color:"#ef476f",fontSize:11,cursor:"pointer",fontFamily:"monospace",marginRight:8}}>Retry</button>
 <button onClick={()=>{localStorage.removeItem("apex_key");setApiKey("");}} style={{padding:"6px 14px",background:"#7b61ff18",border:"1px solid #7b61ff40",borderRadius:5,color:"#7b61ff",fontSize:11,cursor:"pointer",fontFamily:"monospace"}}>Change Key</button>
 </div>}
 {!loading&&P?.headline&&<div className="fu">
+<SignalMeter signal={P.signal} conviction={P.conviction} bullProb={P.bullProb} bearProb={P.bearProb} expectedMove={P.expectedMove} horizonColor={H?.color}/>
 <div style={card}>
 <div style={lbl}>APEX HEADLINE</div>
-<div style={{fontSize:isMobile?13:14,fontWeight:600,lineHeight:1.55,color:"#e8f0ff",marginBottom:14}}>{P.headline}</div>
+<div style={{fontSize:isMobile?14:16,fontWeight:600,lineHeight:1.55,color:"#e8f0ff",marginBottom:14}}>{P.headline}</div>
 {P.scenarios&&<><div style={lbl}>PROBABILITY SCENARIOS</div><div style={b2}>{P.scenarios}</div></>}
 </div>
 {P.drivers&&<div style={card}><div style={lbl}>KEY MARKET DRIVERS</div><div style={b2}>{P.drivers}</div></div>}
-<div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:11,marginBottom:11}}>
+<div style={card}>
+<div style={lbl}>SIGNAL STRENGTH</div>
+<ConvictionBar label="BULL PROBABILITY" value={P.bullProb} color="#06d6a0" showArrow/>
+<ConvictionBar label="BEAR PROBABILITY" value={P.bearProb} color="#ef476f" showArrow/>
+<ConvictionBar label="OVERALL CONVICTION" value={P.conviction} color={H?.color} showArrow={false}/>
+{P.expectedMove&&<div style={{marginTop:10,padding:"8px 10px",background:"#030c1a",borderRadius:5,border:"1px solid #0d1e32"}}>
+<span style={{fontSize:9,color:"#2d4060",fontFamily:"monospace"}}>EXPECTED MOVE: </span>
+<span style={{fontSize:13,fontWeight:700,color:"#c5d8f0",fontFamily:"monospace"}}>{P.expectedMove}</span>
+</div>}
+</div>
+<div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr 1fr",gap:12,marginBottom:12}}>
 {P.watchlist&&<div style={card}><div style={lbl}>👁 WATCH LIST</div><div style={b2}>{P.watchlist}</div></div>}
 {P.peIntel&&<div style={card}><div style={lbl}>💼 PE / M&A INTEL</div><div style={b2}>{P.peIntel}</div></div>}
+{P.sectorRotation&&<div style={card}><div style={lbl}>🔄 SECTOR ROTATION</div><div style={b2}>{P.sectorRotation}</div></div>}
 </div>
-{P.tactical&&<div style={card}><div style={lbl}>⚡ TACTICAL CALL</div><div style={{background:"linear-gradient(135deg,#06d6a010,#7b61ff12)",border:"1px solid #06d6a025",borderRadius:6,padding:12,fontSize:12,lineHeight:1.65,color:"#c5d8f0",fontStyle:"italic"}}>{P.tactical}</div></div>}
-<div style={card}><div style={lbl}>MACRO SNAPSHOT</div>
-{MACRO.map(m=>(<div key={m.l} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid #0d1e3230"}}>
-<span style={{fontSize:9,color:"#2d4060",fontFamily:"monospace"}}>{m.l}</span>
-<span style={{fontSize:9,fontWeight:700,color:m.c,fontFamily:"monospace"}}>{m.v}</span>
-</div>))}</div>
-<div style={card}><div style={lbl}>UPCOMING CATALYSTS</div>
-{CATS.map((c,i)=>(<div key={i} style={{display:"flex",gap:7,alignItems:"flex-start",padding:"5px 0",borderBottom:"1px solid #0d1e3230"}}>
-<div style={{width:5,height:5,borderRadius:"50%",background:c.hot?"#ef476f":"#ffd166",flexShrink:0,marginTop:3}}/>
-<div><div style={{fontSize:7,color:"#2d4060",fontFamily:"monospace"}}>{c.d}</div><div style={{fontSize:10,color:"#7a90b0"}}>{c.e}</div></div>
-</div>))}</div>
-{isMobile&&<div style={card}><div style={lbl}>RISK APPETITE · GS 99TH PCT</div><Gauge v={72}/></div>}
-<button onClick={()=>{setCache(p=>{const n={...p};delete n[key];return n;});setTimeout(()=>go(true),30);}} style={{width:"100%",padding:"9px",background:"#0d1e32",border:"1px solid #1a2a40",borderRadius:6,color:"#7b61ff",fontSize:10,letterSpacing:2,fontFamily:"monospace",cursor:"pointer",fontWeight:700,marginBottom:11}}>↺ REFRESH SIGNAL</button>
+{P.riskMatrix&&<div style={card}><div style={lbl}>⚠️ RISK MATRIX</div><div style={b2}>{P.riskMatrix}</div></div>}
+{P.tactical&&<div style={card}><div style={lbl}>⚡ TACTICAL CALL</div><div style={{background:"linear-gradient(135deg,#06d6a010,#7b61ff15)",border:"1px solid #06d6a030",borderRadius:6,padding:14,fontSize:13,lineHeight:1.7,color:"#e8f0ff",fontStyle:"italic",fontWeight:500}}>{P.tactical}</div></div>}
+<div style={{...card,border:"1px solid #7b61ff20"}}>
+<div style={lbl}>🎯 LOG THIS PREDICTION</div>
+<div style={{fontSize:11,color:"#5a7090",marginBottom:10}}>After this horizon passes, track whether APEX was right. Builds your accuracy dashboard over time.</div>
+<button onClick={()=>setTab("accuracy")} style={{padding:"8px 16px",background:"#7b61ff18",border:"1px solid #7b61ff40",borderRadius:5,color:"#7b61ff",fontSize:10,cursor:"pointer",fontFamily:"monospace",fontWeight:700}}>→ GO TO ACCURACY TRACKER</button>
+</div>
 </div>}
 {!loading&&cache[key]&&!P?.headline&&<div style={card}><div style={b2}>{cache[key]}</div></div>}
+</>}
 </div>
-{!isMobile&&<div style={{width:184,borderLeft:"1px solid #0d1e32",background:"#030c1a",overflowY:"auto",flexShrink:0,padding:10}}>
-<div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,marginBottom:8,fontFamily:"monospace"}}>RISK APPETITE</div>
-<Gauge v={72}/>
-<div style={{fontSize:8,color:"#2d4060",fontFamily:"monospace",textAlign:"center",marginTop:3,marginBottom:12}}>GS: 99TH PCT</div>
+{!isMobile&&tab==="brief"&&<div style={{width:200,borderLeft:"1px solid #0d1e32",background:"#030c1a",overflowY:"auto",flexShrink:0,padding:12}}>
+<div style={{marginBottom:12}}><BigGauge value={72} label="RISK APPETITE" size={130}/><div style={{fontSize:8,color:"#2d4060",fontFamily:"monospace",textAlign:"center",marginTop:2}}>GS: 99TH PCT</div></div>
 <div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,marginBottom:8,fontFamily:"monospace"}}>KEY LEVELS</div>
-{[{sym:"S&P 500",val:"5,831",chg:"-0.42%",up:false,spark:spx,color:"#00d4ff"},{sym:"VIX",val:"18.4",chg:"+2.1",up:false,spark:vix,color:"#ef476f"},{sym:"WTI OIL",val:"$68.4",chg:"-0.8%",up:true,spark:oil,color:"#ffd166"}].map(t=>(
-<div key={t.sym} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #0d1e3260"}}>
-<div><div style={{fontSize:8,color:"#5a7090",fontFamily:"monospace"}}>{t.sym}</div><div style={{fontSize:11,fontWeight:700,color:"#e8f0ff",fontFamily:"monospace"}}>{t.val}</div><div style={{fontSize:9,color:t.up?"#06d6a0":"#ef476f",fontFamily:"monospace"}}>{t.chg}</div></div>
-<Sparkline data={t.spark} color={t.color}/>
+{[{sym:"S&P 500",val:"5,831",chg:"-0.42%",up:false,spark:spx,color:"#00d4ff"},{sym:"VIX",val:"18.4",chg:"+2.1",up:false,spark:vix,color:"#ef476f"},{sym:"WTI OIL",val:"$68.4",chg:"-0.8%",up:true,spark:oil,color:"#ffd166"},{sym:"YIELD CURVE",val:"-18bps",chg:"INVERTED",up:false,spark:yc,color:"#ff9f00"}].map(t=>(
+<div key={t.sym} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid #0d1e3250"}}>
+<div><div style={{fontSize:8,color:"#3d5a7a",fontFamily:"monospace"}}>{t.sym}</div><div style={{fontSize:11,fontWeight:700,color:"#e8f0ff",fontFamily:"monospace"}}>{t.val}</div><div style={{fontSize:9,color:t.up?"#06d6a0":"#ef476f",fontFamily:"monospace"}}>{t.chg}</div></div>
+<Sparkline data={t.spark} color={t.color} width={55} height={22}/>
 </div>))}
+{P&&<>
+<div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,marginTop:12,marginBottom:8,fontFamily:"monospace"}}>LIVE CONVICTION</div>
+<ConvictionBar label="BULL" value={P.bullProb||40} color="#06d6a0" showArrow/>
+<ConvictionBar label="BEAR" value={P.bearProb||30} color="#ef476f" showArrow/>
+<ConvictionBar label="CONVICTION" value={P.conviction||50} color={H?.color} showArrow={false}/>
+</>}
 <div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,marginTop:12,marginBottom:8,fontFamily:"monospace"}}>CATALYSTS</div>
-{CATS.map((c,i)=>(<div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",padding:"4px 0",borderBottom:"1px solid #0d1e3240"}}>
+{[{d:"Jul 7",e:"ISM Services",hot:false},{d:"Jul 7+",e:"Q2 Earnings",hot:true},{d:"Jul 14",e:"Bank Earnings",hot:true},{d:"Jul 28-29",e:"FOMC",hot:true},{d:"Jul 30",e:"Apple Q2",hot:true},{d:"Aug",e:"CPI + Jackson Hole",hot:true},{d:"Dec",e:"Fed Hike 100%",hot:true}].map((c,i)=>(
+<div key={i} style={{display:"flex",gap:6,alignItems:"flex-start",padding:"4px 0",borderBottom:"1px solid #0d1e3230"}}>
 <div style={{width:5,height:5,borderRadius:"50%",background:c.hot?"#ef476f":"#ffd166",flexShrink:0,marginTop:3}}/>
 <div><div style={{fontSize:7,color:"#2d4060",fontFamily:"monospace"}}>{c.d}</div><div style={{fontSize:9,color:"#7a90b0"}}>{c.e}</div></div>
 </div>))}
-<div style={{fontSize:8,letterSpacing:3,color:"#2d4060",fontWeight:700,marginTop:12,marginBottom:8,fontFamily:"monospace"}}>MACRO SNAPSHOT</div>
-{MACRO.map(m=>(<div key={m.l} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid #0d1e3230"}}>
-<span style={{fontSize:8,color:"#2d4060",fontFamily:"monospace"}}>{m.l}</span>
-<span style={{fontSize:8,fontWeight:700,color:m.c,fontFamily:"monospace"}}>{m.v}</span>
-</div>))}
-<button onClick={()=>{setCache(p=>{const n={...p};delete n[key];return n;});setTimeout(()=>go(true),30);}} style={{width:"100%",padding:"8px",background:"#0d1e32",border:"1px solid #1a2a40",borderRadius:6,color:"#7b61ff",fontSize:10,letterSpacing:2,fontFamily:"monospace",cursor:"pointer",fontWeight:700,marginTop:10}}>↺ REFRESH SIGNAL</button>
+<button onClick={()=>{localStorage.removeItem("apex_key");setApiKey("");}} style={{width:"100%",padding:"7px",background:"transparent",border:"1px solid #1a2a40",borderRadius:5,color:"#2d4060",fontSize:9,cursor:"pointer",fontFamily:"monospace",marginTop:12}}>🔑 Change Key</button>
 </div>}
 </div>
 <div style={{borderTop:"1px solid #0d1e32",padding:"5px 14px",display:"flex",justifyContent:"space-between",fontSize:7,color:"#1a2a40",fontFamily:"monospace",flexShrink:0}}>
-<span>APEX v3.0 · SPECULATIVE · NOT INVESTMENT ADVICE</span>
-<span>DATA: SCHWAB · BLACKROCK · BAIN · PWC · BLOOMBERG</span>
+<span>APEX v4.0 · SPECULATIVE · NOT INVESTMENT ADVICE</span>
+<span>GS · BLACKROCK · BAIN · PWC · BLOOMBERG · FACTSET</span>
 </div>
 </div>);
 }
