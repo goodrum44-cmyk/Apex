@@ -21,6 +21,7 @@ body{background:#f0f4f8;font-family:'Inter',system-ui,sans-serif;color:#1a2744;f
 @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.fu{animation:fu .4s ease forwards}
 @keyframes sh{0%{background-position:-300px 0}100%{background-position:300px 0}}
 .sh{background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);background-size:300px 100%;animation:sh 1.3s infinite;border-radius:4px;height:12px;margin-bottom:8px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 button:focus,input:focus,select:focus{outline:none}
 </style>
 </head>
@@ -29,363 +30,782 @@ button:focus,input:focus,select:focus{outline:none}
 <script type="text/babel">
 const{useState,useEffect,useCallback}=React;
 const API="https://api.anthropic.com/v1/messages";
+
 const CTX=`You are APEX, a senior market intelligence AI at a tier-1 investment house.
 CURRENT MARKET DATA (July 4 2026 - markets reopen July 7):
-Fed Rate 3.50-3.75% (Warsh). 20% July FOMC hike prob. 100% December hike priced. CPI >4% YoY. June payrolls +57K vs 115K expected. ISM Mfg 53.3%. Yield curve -18bps inverted. SPX 5831 GS target 8000. NDX 20447. SOX -12% 2 days. DJI +0.76% rotation. VIX 18.4. GS Risk Appetite 99th pct. Put/Call low. Market rotating out of mega-cap tech into defense/industrials. Meta surged on cloud entry. CoreWeave Nebius plummeted. NVDA topping. PE H1 deal volume -34% avg size 4x. Dry powder record. Blackstone $25B PA infra. Apollo $3.5B xAI. Iran ceasefire uncertain oil <$70. China PMI 49.3. EU PMI 49.1. Gold $3142. Copper $4.38. Q2 earnings start July 7 FactSet 23.1% YoY. Apple July 30. Banks week of July 14. FOMC July 28-29.
+Fed Rate 3.50-3.75% (Warsh). 20% July FOMC hike prob. 100% December hike priced. CPI >4% YoY. June payrolls +57K vs 115K expected. ISM Mfg 53.3%. Yield curve -18bps inverted. SPX 5831 GS target 8000. NDX 20447. SOX -12% 2 days. DJI +0.76% rotation. VIX 18.4. GS Risk Appetite 99th pct. Put/Call low. Market rotating out of mega-cap tech into defense/industrials. Meta surged on cloud entry. CoreWeave Nebius plummeted. NVDA topping. PE H1 deal volume -34% avg size 4x. Dry powder record. Blackstone 25B PA infra. Apollo 3.5B xAI. Iran ceasefire uncertain oil <$70. China PMI 49.3. EU PMI 49.1. Gold $3142. Copper $4.38. Q2 earnings start July 7 FactSet 23.1% YoY. Apple July 30. Banks week of July 14. FOMC July 28-29.
 RISKS: Iran escalation; AI valuation reset; PE liquidity crunch; Fed hawkish surprise.
 TAILWINDS: AI infra spend; defense surge; earnings 23%+; broad rotation.`;
+
+// ── Smart Money Data ──────────────────────────────────────────────────────────
+const SMART_MONEY=[
+  {
+    id:"trump",
+    name:"Donald J. Trump",
+    role:"President / 45th & 47th",
+    avatar:"🇺🇸",
+    type:"political",
+    signal:"BULLISH",
+    conviction:72,
+    lastTrade:"Jun 2026",
+    trades:[
+      {date:"Jun 2026",ticker:"DJT",action:"HOLD",dir:"bullish",size:"$25M+",sector:"Media/Tech",note:"Truth Social parent, closely tied to admin narrative"},
+      {date:"May 2026",ticker:"WLFI",action:"BUY",dir:"bullish",size:"$10M+",sector:"Crypto/DeFi",note:"World Liberty Financial crypto project expanding"},
+      {date:"Apr 2026",ticker:"OIL",action:"SELL",dir:"bearish",size:"Policy",sector:"Energy",note:"Iran deal negotiations — strategic oil price suppression"},
+      {date:"Mar 2026",ticker:"DEFENSE",action:"BUY",dir:"bullish",size:"Policy",sector:"Defense",note:"Record defense budget; AVAV, LMT, RTX benefit"},
+    ],
+    sectors:{bullish:["Defense","Crypto","Media","Infrastructure"],bearish:["Clean Energy","Pharma"]},
+    impliedDirection:"Markets friendly to admin — tariff uncertainty resolved short-term. Defense and infrastructure tailwinds strong.",
+    keySignal:"Iran deal attempt = oil suppression = Fed relief. Bullish for risk assets if deal closes.",
+    tradeHistory:[65,70,68,72,75,71,73,72,72],
+  },
+  {
+    id:"pelosi",
+    name:"Nancy Pelosi",
+    role:"Former Speaker / Congresswoman",
+    avatar:"🏛",
+    type:"political",
+    signal:"BULLISH",
+    conviction:85,
+    lastTrade:"Jun 2026",
+    trades:[
+      {date:"Jun 2026",ticker:"NVDA",action:"CALL",dir:"bullish",size:"$1-5M",sector:"AI/Semis",note:"Call options — betting on AI infrastructure buildout despite recent pullback"},
+      {date:"May 2026",ticker:"AAPL",action:"CALL",dir:"bullish",size:"$500K-1M",sector:"Tech",note:"Apple calls ahead of AI device supercycle narrative"},
+      {date:"Apr 2026",ticker:"MSFT",action:"BUY",dir:"bullish",size:"$1-5M",sector:"Cloud/AI",note:"Azure AI growth; Copilot enterprise penetration"},
+      {date:"Mar 2026",ticker:"GOOGL",action:"CALL",dir:"bullish",size:"$500K-1M",sector:"Tech/AI",note:"Waymo + Gemini monetization thesis"},
+    ],
+    sectors:{bullish:["AI/Semis","Big Tech","Cloud","EV"],bearish:["Traditional Energy","Brick Retail"]},
+    impliedDirection:"Heavily concentrated in AI and Big Tech. Despite recent SOX selloff, maintained positions — signals conviction in recovery.",
+    keySignal:"Pelosi buying NVDA calls during the AI selloff is historically a strong contrarian bull signal.",
+    tradeHistory:[70,72,75,80,82,84,85,85,85],
+  },
+  {
+    id:"buffett",
+    name:"Warren Buffett",
+    role:"Berkshire Hathaway CEO",
+    avatar:"🏦",
+    type:"institutional",
+    signal:"CAUTIOUS",
+    conviction:78,
+    lastTrade:"Q1 2026 13-F",
+    trades:[
+      {date:"Q1 2026",ticker:"CASH",action:"HOLD",dir:"cautious",size:"$330B+",sector:"Cash/TBills",note:"Record cash pile — highest in Berkshire history. Not finding value."},
+      {date:"Q1 2026",ticker:"AAPL",action:"TRIM",dir:"bearish",size:"Reduced",sector:"Tech",note:"Continued trimming Apple — now ~25% of portfolio vs 50% peak"},
+      {date:"Q4 2025",ticker:"OXY",action:"BUY",dir:"bullish",size:"$1B+",sector:"Energy",note:"Still accumulating Occidental — long-term energy thesis"},
+      {date:"Q4 2025",ticker:"JPN",action:"HOLD",dir:"bullish",size:"$20B+",sector:"Japan/Value",note:"Japanese trading house stakes — global value play"},
+    ],
+    sectors:{bullish:["Energy","Insurance","Japan","Banking"],bearish:["AI/Tech","Growth","SPACs"]},
+    impliedDirection:"$330B cash = Buffett sees no compelling value. Historically this level of cash precedes a correction or major buying opportunity.",
+    keySignal:"Buffett's record cash hoard is a 5-alarm CAUTIOUS signal. He's waiting for a 20-30% correction to deploy.",
+    tradeHistory:[80,78,76,75,74,76,77,78,78],
+  },
+  {
+    id:"burry",
+    name:"Michael Burry",
+    role:"Scion Asset Management",
+    avatar:"🐻",
+    type:"institutional",
+    signal:"BEARISH",
+    conviction:82,
+    lastTrade:"Q1 2026 13-F",
+    trades:[
+      {date:"Q1 2026",ticker:"SPY PUT",action:"BUY",dir:"bearish",size:"$1.6B notional",sector:"Macro Hedge",note:"Massive SPY put position — largest since 2008 bet"},
+      {date:"Q1 2026",ticker:"QQQ PUT",action:"BUY",dir:"bearish",size:"$800M notional",sector:"Tech Hedge",note:"Nasdaq puts — AI valuation reset thesis"},
+      {date:"Q4 2025",ticker:"BABA",action:"BUY",dir:"bullish",size:"$50M",sector:"China Tech",note:"Chinese value play — deep discount to intrinsic value"},
+      {date:"Q4 2025",ticker:"GEO",action:"BUY",dir:"bullish",size:"$20M",sector:"Prison/Gov",note:"Government contract thesis under current admin"},
+    ],
+    sectors:{bullish:["China Value","Commodities","Short SPY"],bearish:["US Tech","AI Valuations","Bonds"]},
+    impliedDirection:"Burry's largest short position since 2008 is a clear systemic risk warning. He's betting on AI bubble deflation.",
+    keySignal:"$1.6B SPY puts + $800M QQQ puts = Burry expects 20-40% drawdown. His 2008 bet paid 100x.",
+    tradeHistory:[55,58,62,65,70,75,78,80,82],
+  },
+  {
+    id:"druckenmiller",
+    name:"Stan Druckenmiller",
+    role:"Duquesne Family Office",
+    avatar:"📊",
+    type:"institutional",
+    signal:"CAUTIOUS",
+    conviction:75,
+    lastTrade:"Q1 2026 13-F",
+    trades:[
+      {date:"Q1 2026",ticker:"AI/TECH",action:"TRIM",dir:"cautious",size:"Reduced 40%",sector:"AI/Tech",note:"Cut AI exposure significantly — 'valuations disconnected from reality'"},
+      {date:"Q1 2026",ticker:"GOLD",action:"BUY",dir:"bullish",size:"$400M+",sector:"Gold/Macro",note:"Increased gold position — inflation hedge, dollar weakness"},
+      {date:"Q4 2025",ticker:"MSFT",action:"SELL",dir:"bearish",size:"Exited",sector:"Tech",note:"Sold entire Microsoft position — valuation concern"},
+      {date:"Q4 2025",ticker:"ENERGY",action:"BUY",dir:"bullish",size:"$300M",sector:"Energy",note:"Energy names — inflation + geopolitical hedge"},
+    ],
+    sectors:{bullish:["Gold","Energy","Healthcare","Defense"],bearish:["Big Tech","AI Pure Plays","Long Duration"]},
+    impliedDirection:"Trimming tech, buying gold and energy. Classic late-cycle rotation. Sees AI valuations as disconnected.",
+    keySignal:"Druckenmiller cutting AI exposure is the most important signal for tech bulls — he was early into the AI trade.",
+    tradeHistory:[82,80,78,76,74,75,75,75,75],
+  },
+  {
+    id:"wood",
+    name:"Cathie Wood",
+    role:"ARK Invest CEO",
+    avatar:"🚀",
+    type:"institutional",
+    signal:"BULLISH",
+    conviction:88,
+    lastTrade:"Jun 30 2026",
+    trades:[
+      {date:"Jun 2026",ticker:"TSLA",action:"BUY",dir:"bullish",size:"$200M",sector:"EV/AI",note:"Buying Tesla dips — robotaxi + Optimus thesis unchanged"},
+      {date:"Jun 2026",ticker:"CRWV",action:"BUY",dir:"bullish",size:"$50M",sector:"AI Infra",note:"Buying CoreWeave selloff — AI infrastructure long-term thesis"},
+      {date:"Jun 2026",ticker:"COIN",action:"BUY",dir:"bullish",size:"$75M",sector:"Crypto",note:"Coinbase — crypto regulatory clarity thesis"},
+      {date:"May 2026",ticker:"ROKU",action:"BUY",dir:"bullish",size:"$30M",sector:"Streaming",note:"Connected TV ad recovery play"},
+    ],
+    sectors:{bullish:["AI/Innovation","Crypto","EV","Biotech","Space"],bearish:["Banks","Traditional Energy","Retail"]},
+    impliedDirection:"ARK remains maximally bullish on disruptive innovation. Buying every dip. 5-year horizon — short-term pain irrelevant.",
+    keySignal:"Wood buying CRWV dip after Meta cloud news signals she sees this as a temporary disruption, not structural shift.",
+    tradeHistory:[60,65,70,75,80,82,85,87,88],
+  },
+  {
+    id:"icahn",
+    name:"Carl Icahn",
+    role:"Icahn Enterprises",
+    avatar:"⚔️",
+    type:"institutional",
+    signal:"BEARISH",
+    conviction:70,
+    lastTrade:"Q1 2026 13-F",
+    trades:[
+      {date:"Q1 2026",ticker:"SHORT",action:"HOLD",dir:"bearish",size:"Macro Short",sector:"Broad Market",note:"Maintains substantial short book — market overvalued thesis"},
+      {date:"Q1 2026",ticker:"CVR",action:"BUY",dir:"bullish",size:"Activist",sector:"Energy",note:"CVR Energy activist position — refining margin play"},
+      {date:"Q4 2025",ticker:"NFLX",action:"SELL",dir:"bearish",size:"Exited",sector:"Streaming",note:"Exited Netflix — valuation stretched"},
+      {date:"Q4 2025",ticker:"REITs",action:"BUY",dir:"bullish",size:"$200M",sector:"Real Estate",note:"Rate-sensitive play if Fed cuts — value hunting"},
+    ],
+    sectors:{bullish:["Energy","REITs","Commodities","Deep Value"],bearish:["Growth Tech","Long Duration","Consumer Disc"]},
+    impliedDirection:"Short book heavy. Sees broad market as overvalued. Activist focus on energy and hard assets.",
+    keySignal:"Icahn's sustained short book + Buffett's cash = two legendary investors both positioned defensively simultaneously.",
+    tradeHistory:[65,67,68,69,70,70,70,70,70],
+  },
+  {
+    id:"ackman",
+    name:"Bill Ackman",
+    role:"Pershing Square",
+    avatar:"🎯",
+    type:"institutional",
+    signal:"BULLISH",
+    conviction:80,
+    lastTrade:"Q1 2026 13-F",
+    trades:[
+      {date:"Q1 2026",ticker:"HHH",action:"BUY",dir:"bullish",size:"$500M",sector:"Real Estate",note:"Howard Hughes Holdings — long-term real estate development"},
+      {date:"Q1 2026",ticker:"GOOGL",action:"HOLD",dir:"bullish",size:"$2B+",sector:"Tech/AI",note:"Maintaining large Google position — AI monetization thesis"},
+      {date:"Q1 2026",ticker:"RATE HEDGE",action:"BUY",dir:"bearish",size:"$1B notional",sector:"Macro",note:"Interest rate hedge — betting rates stay higher for longer"},
+      {date:"Q4 2025",ticker:"UMG",action:"BUY",dir:"bullish",size:"$400M",sector:"Music/Media",note:"Universal Music — streaming royalty growth thesis"},
+    ],
+    sectors:{bullish:["Real Estate Dev","Big Tech","Music/Media","Financials"],bearish:["Long Duration Bonds"]},
+    impliedDirection:"Constructive on equities but hedged on rates. Sees higher-for-longer as equity positive if earnings grow.",
+    keySignal:"Ackman's rate hedge + equity longs = believes stocks can handle high rates if earnings deliver. Needs FOMC to hold.",
+    tradeHistory:[75,76,77,78,79,80,80,80,80],
+  },
+];
+
+const SECTOR_HEATMAP=[
+  {sector:"AI / Semis",bulls:["Pelosi","Wood"],bears:["Burry","Druckenmiller"],net:+1,color:"#f59e0b"},
+  {sector:"Defense",bulls:["Trump","Buffett"],bears:[],net:+2,color:"#10b981"},
+  {sector:"Big Tech",bulls:["Pelosi","Ackman"],bears:["Druckenmiller","Icahn"],net:0,color:"#94a3b8"},
+  {sector:"Energy",bulls:["Buffett","Icahn","Trump","Druckenmiller"],bears:[],net:+4,color:"#10b981"},
+  {sector:"Crypto",bulls:["Trump","Wood"],bears:[],net:+2,color:"#10b981"},
+  {sector:"Gold",bulls:["Druckenmiller"],bears:[],net:+1,color:"#10b981"},
+  {sector:"Broad Mkt",bulls:["Pelosi","Wood","Ackman"],bears:["Burry","Icahn","Buffett"],net:-0,color:"#f59e0b"},
+  {sector:"China",bulls:["Burry"],bears:[],net:+1,color:"#f59e0b"},
+  {sector:"EV / Tesla",bulls:["Wood"],bears:[],net:+1,color:"#f59e0b"},
+  {sector:"Healthcare",bulls:["Druckenmiller"],bears:[],net:+1,color:"#10b981"},
+];
+
 const HORIZONS=[
-{id:"today",label:"Today",sub:"Jul 4 Holiday",icon:"⚡",color:"#6366f1"},
-{id:"tomorrow",label:"Tomorrow",sub:"Jul 7 Open",icon:"🌅",color:"#8b5cf6"},
-{id:"thisweek",label:"This Week",sub:"Jul 7-11",icon:"📅",color:"#0ea5e9"},
-{id:"nextweek",label:"Next Week",sub:"Jul 14-18",icon:"🔭",color:"#f59e0b"},
-{id:"thismonth",label:"This Month",sub:"July 2026",icon:"📊",color:"#ef4444"},
-{id:"nextmonth",label:"Next Month",sub:"Aug 2026",icon:"🗓",color:"#ec4899"},
-{id:"thisqtr",label:"This Qtr",sub:"Q3 2026",icon:"📈",color:"#10b981"},
-{id:"nextqtr",label:"Next Qtr",sub:"Q4 2026",icon:"🏦",color:"#f97316"},
-{id:"year",label:"Full Year",sub:"2026 Outlook",icon:"🌐",color:"#14b8a6"},
+  {id:"today",label:"Today",sub:"Jul 4 Holiday",icon:"⚡",color:"#6366f1"},
+  {id:"tomorrow",label:"Tomorrow",sub:"Jul 7 Open",icon:"🌅",color:"#8b5cf6"},
+  {id:"thisweek",label:"This Week",sub:"Jul 7-11",icon:"📅",color:"#0ea5e9"},
+  {id:"nextweek",label:"Next Week",sub:"Jul 14-18",icon:"🔭",color:"#f59e0b"},
+  {id:"thismonth",label:"This Month",sub:"July 2026",icon:"📊",color:"#ef4444"},
+  {id:"nextmonth",label:"Next Month",sub:"Aug 2026",icon:"🗓",color:"#ec4899"},
+  {id:"thisqtr",label:"This Qtr",sub:"Q3 2026",icon:"📈",color:"#10b981"},
+  {id:"nextqtr",label:"Next Qtr",sub:"Q4 2026",icon:"🏦",color:"#f97316"},
+  {id:"year",label:"Full Year",sub:"2026 Outlook",icon:"🌐",color:"#14b8a6"},
 ];
+
 const LENSES=[
-{id:"macro",label:"Macro",icon:"🏛"},{id:"labor",label:"Labor",icon:"👷"},
-{id:"pe",label:"PE/M&A",icon:"💼"},{id:"sentiment",label:"Sentiment",icon:"🧠"},
-{id:"sector",label:"Sectors",icon:"🏭"},{id:"geo",label:"Geopolitical",icon:"🌍"},
-{id:"credit",label:"Credit",icon:"📉"},{id:"global",label:"Global Macro",icon:"🌏"},
+  {id:"macro",label:"Macro",icon:"🏛"},{id:"labor",label:"Labor",icon:"👷"},
+  {id:"pe",label:"PE/M&A",icon:"💼"},{id:"sentiment",label:"Sentiment",icon:"🧠"},
+  {id:"sector",label:"Sectors",icon:"🏭"},{id:"geo",label:"Geopolitical",icon:"🌍"},
+  {id:"credit",label:"Credit",icon:"📉"},{id:"global",label:"Global Macro",icon:"🌏"},
 ];
+
 const TICKERS=[
-{s:"SPX",v:"5,831",c:"-0.42%",up:false},{s:"NDX",v:"20,447",c:"-1.21%",up:false},
-{s:"DJI",v:"42,912",c:"+0.76%",up:true},{s:"VIX",v:"18.4",c:"+2.1",up:false},
-{s:"10YR",v:"4.38%",c:"+3bp",up:false},{s:"OIL",v:"$68.4",c:"-0.8%",up:true},
-{s:"GOLD",v:"$3,142",c:"+0.3%",up:true},{s:"COPPER",v:"$4.38",c:"-0.4%",up:false},
-{s:"SOX",v:"5,114",c:"-7.2%",up:false},{s:"FED",v:"3.625%",c:"HOLD",up:true},
-{s:"DXY",v:"103.8",c:"+0.2%",up:false},{s:"BTC",v:"$97.2K",c:"-1.4%",up:false},
+  {s:"SPX",v:"5,831",c:"-0.42%",up:false},{s:"NDX",v:"20,447",c:"-1.21%",up:false},
+  {s:"DJI",v:"42,912",c:"+0.76%",up:true},{s:"VIX",v:"18.4",c:"+2.1",up:false},
+  {s:"10YR",v:"4.38%",c:"+3bp",up:false},{s:"OIL",v:"$68.4",c:"-0.8%",up:true},
+  {s:"GOLD",v:"$3,142",c:"+0.3%",up:true},{s:"SOX",v:"5,114",c:"-7.2%",up:false},
+  {s:"FED",v:"3.625%",c:"HOLD",up:true},{s:"DXY",v:"103.8",c:"+0.2%",up:false},
 ];
+
 const INDICATORS=[
-{label:"Fear & Greed",value:72,status:"GREED",color:"#f59e0b",icon:"😰"},
-{label:"Yield Curve",value:32,status:"-18bps INV",color:"#ef4444",icon:"📉"},
-{label:"Credit Spreads",value:45,status:"IG+85bp",color:"#f59e0b",icon:"💳"},
-{label:"Market Breadth",value:61,status:">200MA 61%",color:"#10b981",icon:"📊"},
-{label:"Put/Call Ratio",value:25,status:"COMPLACENT",color:"#ef4444",icon:"⚠️"},
-{label:"Insider Flow",value:30,status:"NET SELLERS",color:"#ef4444",icon:"👔"},
-{label:"ISM Mfg PMI",value:68,status:"53.3 EXP",color:"#10b981",icon:"🏭"},
-{label:"Dr. Copper",value:44,status:"$4.38 ↓",color:"#f59e0b",icon:"🔧"},
-{label:"GS Risk App.",value:99,status:"99TH PCT",color:"#ef4444",icon:"🚨"},
-{label:"PE Dry Powder",value:85,status:"RECORD HIGH",color:"#6366f1",icon:"💰"},
+  {label:"Fear & Greed",value:72,status:"GREED",color:"#f59e0b",icon:"😰"},
+  {label:"Yield Curve",value:32,status:"-18bps INV",color:"#ef4444",icon:"📉"},
+  {label:"Credit Spreads",value:45,status:"IG+85bp",color:"#f59e0b",icon:"💳"},
+  {label:"Market Breadth",value:61,status:">200MA 61%",color:"#10b981",icon:"📊"},
+  {label:"Put/Call Ratio",value:25,status:"COMPLACENT",color:"#ef4444",icon:"⚠️"},
+  {label:"Insider Flow",value:30,status:"NET SELLERS",color:"#ef4444",icon:"👔"},
+  {label:"ISM Mfg PMI",value:68,status:"53.3 EXP",color:"#10b981",icon:"🏭"},
+  {label:"Dr. Copper",value:44,status:"$4.38 ↓",color:"#f59e0b",icon:"🔧"},
+  {label:"GS Risk App.",value:99,status:"99TH PCT",color:"#ef4444",icon:"🚨"},
+  {label:"PE Dry Powder",value:85,status:"RECORD HIGH",color:"#6366f1",icon:"💰"},
 ];
+
 function buildPrompt(hz,ln){
-const hl={today:"TODAY July 4 2026 markets closed positioning for Monday open",tomorrow:"TOMORROW July 7 2026 first trading day back gap risk",thisweek:"THIS WEEK July 7-11 2026 Q2 earnings kickoff ISM Services",nextweek:"NEXT WEEK July 14-18 2026 peak bank earnings retail sales",thismonth:"THIS MONTH July 2026 FOMC July 28-29 Apple earnings July 30",nextmonth:"NEXT MONTH August 2026 CPI Jackson Hole seasonal weakness",thisqtr:"THIS QUARTER Q3 2026 July through September",nextqtr:"NEXT QUARTER Q4 2026 Fed December hike year-end positioning",year:"FULL YEAR 2026 OUTLOOK strategic positioning"};
-const lf=ln?`\nSPECIAL FOCUS: Emphasize ${ln.toUpperCase()} lens deeply.`:"";
-return `${CTX}${lf}\n\nTASK: Institutional brief for: ${hl[hz]}\n\nRespond with EXACTLY these headers:\n## SIGNAL: [BULLISH or CAUTIOUS or BEARISH or NEUTRAL]\n## CONVICTION: [1-99]%\n## BULL_PROB: [1-99]%\n## BEAR_PROB: [1-99]%\n## EXPECTED_MOVE: [like +1.2% to -2.8%]\n## HEADLINE\n[one surgical sentence]\n## KEY DRIVERS\n🟢 [bullish with data]\n🔴 [bearish with data]\n🟡 [mixed with data]\n🟢 [additional bullish]\n🔴 [additional bearish]\n## PROBABILITY SCENARIOS\n🎯 BASE CASE (XX%): [outcome with SPX targets]\n⬆️ BULL CASE (XX%): [outcome with SPX targets]\n⬇️ BEAR CASE (XX%): [outcome with SPX targets]\n## WATCH LIST\n1. [specific level/date/threshold]\n2. [specific level/date/threshold]\n3. [specific level/date/threshold]\n## SECTOR ROTATION\n[overweight and underweight with reasoning]\n## PE INTEL\n[2-3 sentences PE/M&A implications]\n## RISK MATRIX\nHIGH: [risk with probability]\nMEDIUM: [risk]\nLOW: [tail risk]\n## TACTICAL CALL\n[one direct sentence]\nBe surgical. Goldman Sachs morning note meets BlackRock.`;
+  const hl={today:"TODAY July 4 2026 markets closed positioning for Monday open",tomorrow:"TOMORROW July 7 2026 first trading day back gap risk",thisweek:"THIS WEEK July 7-11 2026 Q2 earnings kickoff ISM Services",nextweek:"NEXT WEEK July 14-18 2026 peak bank earnings retail sales",thismonth:"THIS MONTH July 2026 FOMC July 28-29 Apple earnings July 30",nextmonth:"NEXT MONTH August 2026 CPI Jackson Hole seasonal weakness",thisqtr:"THIS QUARTER Q3 2026 July through September",nextqtr:"NEXT QUARTER Q4 2026 Fed December hike year-end positioning",year:"FULL YEAR 2026 OUTLOOK strategic positioning"};
+  const lf=ln?`\nSPECIAL FOCUS: Emphasize ${ln.toUpperCase()} lens deeply.`:"";
+  return `${CTX}${lf}\n\nTASK: Institutional brief for: ${hl[hz]}\n\nRespond with EXACTLY these headers:\n## SIGNAL: [BULLISH or CAUTIOUS or BEARISH or NEUTRAL]\n## CONVICTION: [1-99]%\n## BULL_PROB: [1-99]%\n## BEAR_PROB: [1-99]%\n## EXPECTED_MOVE: [like +1.2% to -2.8%]\n## HEADLINE\n[one surgical sentence]\n## KEY DRIVERS\n🟢 [bullish with data]\n🔴 [bearish with data]\n🟡 [mixed with data]\n🟢 [additional bullish]\n🔴 [additional bearish]\n## PROBABILITY SCENARIOS\n🎯 BASE CASE (XX%): [outcome with SPX targets]\n⬆️ BULL CASE (XX%): [outcome with SPX targets]\n⬇️ BEAR CASE (XX%): [outcome with SPX targets]\n## WATCH LIST\n1. [specific level/date/threshold]\n2. [specific level/date/threshold]\n3. [specific level/date/threshold]\n## SECTOR ROTATION\n[overweight and underweight with reasoning]\n## PE INTEL\n[2-3 sentences PE/M&A implications]\n## RISK MATRIX\nHIGH: [risk with probability]\nMEDIUM: [risk]\nLOW: [tail risk]\n## TACTICAL CALL\n[one direct sentence]\nBe surgical. Goldman Sachs morning note meets BlackRock.`;
 }
+
 function parse(t){
-if(!t)return null;
-const g=(lbl)=>{const r=new RegExp(`## ${lbl}[^\\n]*\\n([\\s\\S]*?)(?=\\n## |$)`,"i");const m=t.match(r);return m?m[1].trim():"";};
-const s=t.match(/## SIGNAL:\s*([A-Z]+)/i);
-const cv=t.match(/## CONVICTION:\s*(\d+)/i);
-const bp=t.match(/## BULL_PROB:\s*(\d+)/i);
-const brp=t.match(/## BEAR_PROB:\s*(\d+)/i);
-const em=t.match(/## EXPECTED_MOVE:\s*([^\n]+)/i);
-return{signal:s?s[1].toUpperCase():"",conviction:cv?parseInt(cv[1]):50,bullProb:bp?parseInt(bp[1]):40,bearProb:brp?parseInt(brp[1]):30,expectedMove:em?em[1].trim():"",headline:g("HEADLINE"),drivers:g("KEY DRIVERS"),scenarios:g("PROBABILITY SCENARIOS"),watchlist:g("WATCH LIST"),sectorRotation:g("SECTOR ROTATION"),peIntel:g("PE INTEL"),riskMatrix:g("RISK MATRIX"),tactical:g("TACTICAL CALL")};
+  if(!t)return null;
+  const g=(lbl)=>{const r=new RegExp(`## ${lbl}[^\\n]*\\n([\\s\\S]*?)(?=\\n## |$)`,"i");const m=t.match(r);return m?m[1].trim():"";};
+  const s=t.match(/## SIGNAL:\s*([A-Z]+)/i);
+  const cv=t.match(/## CONVICTION:\s*(\d+)/i);
+  const bp=t.match(/## BULL_PROB:\s*(\d+)/i);
+  const brp=t.match(/## BEAR_PROB:\s*(\d+)/i);
+  const em=t.match(/## EXPECTED_MOVE:\s*([^\n]+)/i);
+  return{signal:s?s[1].toUpperCase():"",conviction:cv?parseInt(cv[1]):50,bullProb:bp?parseInt(bp[1]):40,bearProb:brp?parseInt(brp[1]):30,expectedMove:em?em[1].trim():"",headline:g("HEADLINE"),drivers:g("KEY DRIVERS"),scenarios:g("PROBABILITY SCENARIOS"),watchlist:g("WATCH LIST"),sectorRotation:g("SECTOR ROTATION"),peIntel:g("PE INTEL"),riskMatrix:g("RISK MATRIX"),tactical:g("TACTICAL CALL")};
 }
+
 const SS_MAP={BULLISH:{bg:"#dcfce7",border:"#16a34a",text:"#15803d",icon:"▲"},CAUTIOUS:{bg:"#fef9c3",border:"#ca8a04",text:"#a16207",icon:"◆"},BEARISH:{bg:"#fee2e2",border:"#dc2626",text:"#b91c1c",icon:"▼"},NEUTRAL:{bg:"#f1f5f9",border:"#64748b",text:"#475569",icon:"●"}};
-function BarChart({bull,bear,neutral}){
-const data=[{label:"Bull",value:bull,color:"#10b981"},{label:"Neutral",value:neutral,color:"#94a3b8"},{label:"Bear",value:bear,color:"#ef4444"}];
-return<div style={{display:"flex",alignItems:"flex-end",gap:12,height:80,padding:"0 8px"}}>
-{data.map(d=><div key={d.label} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-<span style={{fontSize:13,fontWeight:700,color:d.color}}>{d.value}%</span>
-<div style={{width:"100%",height:50,display:"flex",alignItems:"flex-end"}}>
-<div style={{width:"100%",height:`${d.value}%`,background:d.color,borderRadius:"4px 4px 0 0",minHeight:4}}/>
-</div>
-<span style={{fontSize:10,color:"#64748b",fontWeight:600}}>{d.label}</span>
-</div>)}
-</div>;
+const SIG_COLOR={BULLISH:"#10b981",CAUTIOUS:"#f59e0b",BEARISH:"#ef4444",NEUTRAL:"#94a3b8"};
+
+function Spark({data,color,w=60,h=28}){
+  const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1;
+  const pts=data.map((v,i)=>`${(i/(data.length-1))*w},${h-((v-mn)/rng)*h}`).join(" ");
+  const lp=pts.split(" ").at(-1).split(",");
+  return<svg width={w} height={h} style={{overflow:"visible"}}>
+    <defs><linearGradient id={`sg${color.replace("#","")}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.15"/><stop offset="100%" stopColor={color} stopOpacity="0"/></linearGradient></defs>
+    <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"/>
+    <circle cx={lp[0]} cy={lp[1]} r="3" fill={color}/>
+  </svg>;
 }
-function Spark({data,color,w=60,h=24}){
-const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1;
-const pts=data.map((v,i)=>`${(i/(data.length-1))*w},${h-((v-mn)/rng)*h}`).join(" ");
-const lp=pts.split(" ").at(-1).split(",");
-return<svg width={w} height={h} style={{overflow:"visible"}}>
-<polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"/>
-<circle cx={lp[0]} cy={lp[1]} r="3" fill={color}/>
-</svg>;
-}
+
 function ProgressBar({value,color,label,sublabel}){
-return<div style={{marginBottom:12}}>
-<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-<span style={{fontSize:12,fontWeight:600,color:"#374151"}}>{label}</span>
-<span style={{fontSize:12,fontWeight:700,color}}>{sublabel||value+"%"}</span>
-</div>
-<div style={{height:8,background:"#e2e8f0",borderRadius:4,overflow:"hidden"}}>
-<div style={{height:"100%",width:`${value}%`,background:`linear-gradient(90deg,${color}cc,${color})`,borderRadius:4,transition:"width 1s ease"}}/>
-</div>
-</div>;
+  return<div style={{marginBottom:10}}>
+    <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+      <span style={{fontSize:11,fontWeight:600,color:"#374151"}}>{label}</span>
+      <span style={{fontSize:11,fontWeight:700,color}}>{sublabel||value+"%"}</span>
+    </div>
+    <div style={{height:7,background:"#e2e8f0",borderRadius:4,overflow:"hidden"}}>
+      <div style={{height:"100%",width:`${value}%`,background:`linear-gradient(90deg,${color}cc,${color})`,borderRadius:4,transition:"width 1s ease"}}/>
+    </div>
+  </div>;
 }
+
 function StatCard({label,value,sub,color,icon}){
-return<div style={{background:"white",borderRadius:10,padding:"14px 16px",boxShadow:"0 1px 3px rgba(0,0,0,0.08)",borderLeft:`4px solid ${color}`,flex:1,minWidth:120}}>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-<div>
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:600,letterSpacing:0.5,marginBottom:4,textTransform:"uppercase"}}>{label}</div>
-<div style={{fontSize:20,fontWeight:800,color:"#1e293b",lineHeight:1}}>{value}</div>
-{sub&&<div style={{fontSize:11,color:"#64748b",fontWeight:600,marginTop:4}}>{sub}</div>}
-</div>
-<span style={{fontSize:22,opacity:0.7}}>{icon}</span>
-</div>
-</div>;
+  return<div style={{background:"white",borderRadius:10,padding:"13px 15px",boxShadow:"0 1px 3px rgba(0,0,0,0.08)",borderLeft:`4px solid ${color}`,flex:1,minWidth:110}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+      <div>
+        <div style={{fontSize:9,color:"#94a3b8",fontWeight:600,letterSpacing:0.5,marginBottom:3,textTransform:"uppercase"}}>{label}</div>
+        <div style={{fontSize:19,fontWeight:800,color:"#1e293b",lineHeight:1}}>{value}</div>
+        {sub&&<div style={{fontSize:10,color:"#64748b",fontWeight:600,marginTop:3}}>{sub}</div>}
+      </div>
+      <span style={{fontSize:20,opacity:0.7}}>{icon}</span>
+    </div>
+  </div>;
 }
+
+// ── SMART MONEY TAB ───────────────────────────────────────────────────────────
+function SmartMoneyTab(){
+  const [selected, setSelected] = useState(null);
+  const [filterType, setFilterType] = useState("all");
+
+  const bulls = SMART_MONEY.filter(p=>p.signal==="BULLISH").length;
+  const bears = SMART_MONEY.filter(p=>p.signal==="BEARISH").length;
+  const cauts = SMART_MONEY.filter(p=>p.signal==="CAUTIOUS").length;
+  const total = SMART_MONEY.length;
+  const consensusScore = Math.round((bulls*100 + cauts*50) / total);
+  const consensusLabel = consensusScore > 65 ? "BULLISH LEAN" : consensusScore > 45 ? "MIXED / CAUTIOUS" : "BEARISH LEAN";
+  const consensusColor = consensusScore > 65 ? "#10b981" : consensusScore > 45 ? "#f59e0b" : "#ef4444";
+
+  const filtered = filterType === "all" ? SMART_MONEY : SMART_MONEY.filter(p=>p.type===filterType);
+  const selectedPerson = SMART_MONEY.find(p=>p.id===selected);
+
+  return<div>
+    {/* Header */}
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+      <div>
+        <h2 style={{fontSize:16,fontWeight:700,color:"#1e293b",marginBottom:2}}>🧠 Smart Money Tracker</h2>
+        <div style={{fontSize:11,color:"#94a3b8"}}>Congressional disclosures · 13-F filings · Public statements · Known positions</div>
+      </div>
+      <div style={{display:"flex",gap:6}}>
+        {["all","political","institutional"].map(t=>(
+          <button key={t} onClick={()=>setFilterType(t)} style={{padding:"5px 12px",borderRadius:6,border:`1px solid ${filterType===t?"#6366f1":"#e2e8f0"}`,background:filterType===t?"#6366f1":"white",color:filterType===t?"white":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer",textTransform:"capitalize"}}>
+            {t==="all"?"All":t==="political"?"🏛 Political":"🏦 Institutional"}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* Consensus Dashboard */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:12,marginBottom:16}}>
+      <div style={{background:"white",borderRadius:10,padding:14,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",borderTop:`3px solid ${consensusColor}`,gridColumn:"span 1"}}>
+        <div style={{fontSize:9,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Consensus Signal</div>
+        <div style={{fontSize:18,fontWeight:800,color:consensusColor}}>{consensusLabel}</div>
+        <div style={{height:6,background:"#f1f5f9",borderRadius:3,overflow:"hidden",marginTop:8}}>
+          <div style={{height:"100%",width:`${consensusScore}%`,background:consensusColor,borderRadius:3}}/>
+        </div>
+        <div style={{fontSize:10,color:"#94a3b8",marginTop:4}}>{consensusScore}/100 composite score</div>
+      </div>
+      <div style={{background:"#dcfce7",border:"1px solid #16a34a",borderRadius:10,padding:14,textAlign:"center"}}>
+        <div style={{fontSize:9,color:"#15803d",fontWeight:700,letterSpacing:1,marginBottom:4}}>BULLISH</div>
+        <div style={{fontSize:36,fontWeight:900,color:"#15803d"}}>{bulls}</div>
+        <div style={{fontSize:10,color:"#15803d"}}>players buying</div>
+      </div>
+      <div style={{background:"#fef9c3",border:"1px solid #ca8a04",borderRadius:10,padding:14,textAlign:"center"}}>
+        <div style={{fontSize:9,color:"#a16207",fontWeight:700,letterSpacing:1,marginBottom:4}}>CAUTIOUS</div>
+        <div style={{fontSize:36,fontWeight:900,color:"#a16207"}}>{cauts}</div>
+        <div style={{fontSize:10,color:"#a16207"}}>reducing risk</div>
+      </div>
+      <div style={{background:"#fee2e2",border:"1px solid #dc2626",borderRadius:10,padding:14,textAlign:"center"}}>
+        <div style={{fontSize:9,color:"#b91c1c",fontWeight:700,letterSpacing:1,marginBottom:4}}>BEARISH</div>
+        <div style={{fontSize:36,fontWeight:900,color:"#b91c1c"}}>{bears}</div>
+        <div style={{fontSize:10,color:"#b91c1c"}}>shorting / hedging</div>
+      </div>
+    </div>
+
+    {/* Bull / Bear bar chart */}
+    <div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:16}}>
+      <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:12,textTransform:"uppercase"}}>Smart Money Positioning — Conviction by Player</div>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {SMART_MONEY.map(p=>{
+          const sc=SIG_COLOR[p.signal]||"#94a3b8";
+          const icon=p.signal==="BULLISH"?"▲":p.signal==="BEARISH"?"▼":"◆";
+          return<div key={p.id} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>setSelected(selected===p.id?null:p.id)}>
+            <span style={{fontSize:16,width:24,flexShrink:0}}>{p.avatar}</span>
+            <div style={{width:130,flexShrink:0}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#1e293b"}}>{p.name.split(" ").slice(-1)[0]}</div>
+              <div style={{fontSize:9,color:"#94a3b8"}}>{p.role.split("/")[0].trim()}</div>
+            </div>
+            <div style={{flex:1,height:20,background:"#f1f5f9",borderRadius:4,overflow:"hidden",position:"relative"}}>
+              <div style={{height:"100%",width:`${p.conviction}%`,background:`linear-gradient(90deg,${sc}80,${sc})`,borderRadius:4,transition:"width 1s ease",display:"flex",alignItems:"center",paddingLeft:8}}>
+                <span style={{fontSize:9,fontWeight:700,color:"white",whiteSpace:"nowrap"}}>{icon} {p.signal}</span>
+              </div>
+            </div>
+            <div style={{width:36,textAlign:"right",fontSize:11,fontWeight:700,color:sc,flexShrink:0}}>{p.conviction}%</div>
+            <Spark data={p.tradeHistory} color={sc} w={55} h={20}/>
+          </div>;
+        })}
+      </div>
+    </div>
+
+    {/* Sector Heatmap */}
+    <div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:16}}>
+      <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:12,textTransform:"uppercase"}}>Sector Heatmap — Where Smart Money Is Flowing</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8}}>
+        {SECTOR_HEATMAP.map(s=>{
+          const netColor = s.net>1?"#10b981":s.net<-1?"#ef4444":"#f59e0b";
+          const netBg = s.net>1?"#dcfce7":s.net<-1?"#fee2e2":"#fef9c3";
+          const netBorder = s.net>1?"#16a34a":s.net<-1?"#dc2626":"#ca8a04";
+          const arrow = s.net>0?"▲":s.net<0?"▼":"─";
+          return<div key={s.sector} style={{background:netBg,border:`1px solid ${netBorder}`,borderRadius:8,padding:10,textAlign:"center"}}>
+            <div style={{fontSize:10,fontWeight:700,color:"#1e293b",marginBottom:4}}>{s.sector}</div>
+            <div style={{fontSize:20,fontWeight:900,color:netColor}}>{arrow}</div>
+            <div style={{fontSize:9,color:netColor,fontWeight:600}}>{s.bulls.length}B / {s.bears.length}S</div>
+            {s.bulls.length>0&&<div style={{fontSize:8,color:"#15803d",marginTop:2}}>{s.bulls.slice(0,2).join(", ")}</div>}
+            {s.bears.length>0&&<div style={{fontSize:8,color:"#b91c1c"}}>{s.bears.slice(0,2).join(", ")}</div>}
+          </div>;
+        })}
+      </div>
+    </div>
+
+    {/* Player Cards Grid */}
+    <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:10,textTransform:"uppercase"}}>Individual Player Profiles — Tap for Detail</div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12,marginBottom:16}}>
+      {filtered.map(p=>{
+        const sc=SIG_COLOR[p.signal]||"#94a3b8";
+        const ss=SS_MAP[p.signal]||SS_MAP.NEUTRAL;
+        const isSelected=selected===p.id;
+        return<div key={p.id}>
+          <div onClick={()=>setSelected(isSelected?null:p.id)} style={{background:"white",borderRadius:10,padding:14,boxShadow:isSelected?`0 0 0 2px ${sc},0 4px 12px rgba(0,0,0,0.12)`:"0 1px 3px rgba(0,0,0,0.08)",cursor:"pointer",transition:"all .2s",borderTop:`3px solid ${sc}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:28}}>{p.avatar}</span>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:"#1e293b"}}>{p.name}</div>
+                  <div style={{fontSize:10,color:"#94a3b8"}}>{p.role}</div>
+                </div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{background:ss.bg,border:`1px solid ${ss.border}`,borderRadius:5,padding:"3px 8px",fontSize:11,fontWeight:800,color:ss.text}}>
+                  {ss.icon} {p.signal}
+                </div>
+                <div style={{fontSize:10,color:"#94a3b8",marginTop:3}}>{p.conviction}% conviction</div>
+              </div>
+            </div>
+
+            {/* Mini conviction bar */}
+            <div style={{height:5,background:"#f1f5f9",borderRadius:3,overflow:"hidden",marginBottom:8}}>
+              <div style={{height:"100%",width:`${p.conviction}%`,background:`linear-gradient(90deg,${sc}80,${sc})`,borderRadius:3}}/>
+            </div>
+
+            {/* Last trade */}
+            <div style={{background:"#f8fafc",borderRadius:6,padding:"8px 10px",marginBottom:8}}>
+              <div style={{fontSize:9,color:"#94a3b8",fontWeight:600,marginBottom:3}}>LATEST MOVE — {p.lastTrade}</div>
+              <div style={{fontSize:11,color:"#1e293b",fontWeight:600}}>{p.trades[0].action} {p.trades[0].ticker}</div>
+              <div style={{fontSize:10,color:"#64748b"}}>{p.trades[0].note.slice(0,60)}...</div>
+            </div>
+
+            {/* Key signal */}
+            <div style={{fontSize:11,color:sc,fontWeight:600,lineHeight:1.4}}>
+              {p.keySignal.slice(0,80)}...
+            </div>
+
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10}}>
+              <Spark data={p.tradeHistory} color={sc} w={80} h={24}/>
+              <span style={{fontSize:10,color:"#94a3b8"}}>tap for full detail ›</span>
+            </div>
+          </div>
+
+          {/* Expanded Detail */}
+          {isSelected&&<div style={{background:"white",borderRadius:10,padding:16,marginTop:4,boxShadow:"0 4px 12px rgba(0,0,0,0.1)",border:`1px solid ${sc}30`}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#374151",marginBottom:10}}>📋 Full Position Analysis</div>
+
+            {/* Implied direction */}
+            <div style={{background:`${sc}10`,border:`1px solid ${sc}30`,borderRadius:6,padding:10,marginBottom:10}}>
+              <div style={{fontSize:9,color:sc,fontWeight:700,letterSpacing:1,marginBottom:4}}>IMPLIED MARKET DIRECTION</div>
+              <div style={{fontSize:11,color:"#374151",lineHeight:1.6}}>{p.impliedDirection}</div>
+            </div>
+
+            {/* Sectors */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+              <div style={{background:"#dcfce7",borderRadius:6,padding:8}}>
+                <div style={{fontSize:9,color:"#15803d",fontWeight:700,marginBottom:4}}>▲ OVERWEIGHT</div>
+                {p.sectors.bullish.map(s=><div key={s} style={{fontSize:10,color:"#15803d",fontWeight:600}}>• {s}</div>)}
+              </div>
+              <div style={{background:"#fee2e2",borderRadius:6,padding:8}}>
+                <div style={{fontSize:9,color:"#b91c1c",fontWeight:700,marginBottom:4}}>▼ UNDERWEIGHT</div>
+                {p.sectors.bearish.map(s=><div key={s} style={{fontSize:10,color:"#b91c1c",fontWeight:600}}>• {s}</div>)}
+              </div>
+            </div>
+
+            {/* Trade History */}
+            <div style={{fontSize:9,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>RECENT TRADES / POSITIONS</div>
+            {p.trades.map((t,i)=>(
+              <div key={i} style={{display:"flex",gap:8,padding:"6px 0",borderBottom:"1px solid #f1f5f9",alignItems:"flex-start"}}>
+                <div style={{width:5,height:5,borderRadius:"50%",background:t.dir==="bullish"?"#10b981":t.dir==="bearish"?"#ef4444":"#f59e0b",flexShrink:0,marginTop:4}}/>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",justifyContent:"space-between"}}>
+                    <span style={{fontSize:11,fontWeight:700,color:"#1e293b"}}>{t.action} {t.ticker}</span>
+                    <span style={{fontSize:9,color:"#94a3b8"}}>{t.date}</span>
+                  </div>
+                  <div style={{fontSize:10,color:"#64748b"}}>{t.note}</div>
+                  <div style={{fontSize:9,color:"#94a3b8"}}>Size: {t.size} · Sector: {t.sector}</div>
+                </div>
+              </div>
+            ))}
+          </div>}
+        </div>;
+      })}
+    </div>
+
+    {/* Disclaimer */}
+    <div style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:8,padding:10,fontSize:10,color:"#a16207",lineHeight:1.6}}>
+      ⚠️ <strong>Data Notice:</strong> Smart Money positions based on most recent public disclosures (STOCK Act filings, 13-F quarterly reports, public statements). Congressional trades may lag up to 45 days. Institutional 13-F filings lag up to 45 days from quarter end. Positions may have changed. This is not investment advice.
+    </div>
+  </div>;
+}
+
+// ── Accuracy Tracker ─────────────────────────────────────────────────────────
 function AccuracyTracker(){
-const[history,setHistory]=useState(()=>{try{return JSON.parse(localStorage.getItem("apex_history")||"[]");}catch{return[];}});
-const[showAdd,setShowAdd]=useState(false);
-const[form,setForm]=useState({horizon:"tomorrow",result:"correct",note:""});
-const save=()=>{const h=[{...form,id:Date.now(),timestamp:new Date().toISOString()},...history].slice(0,100);setHistory(h);localStorage.setItem("apex_history",JSON.stringify(h));setShowAdd(false);};
-const total=history.length,correct=history.filter(h=>h.result==="correct").length,partial=history.filter(h=>h.result==="partial").length;
-const accuracy=total>0?Math.round((correct+partial*0.5)/total*100):0;
-const byHorizon=HORIZONS.map(h=>({...h,total:history.filter(x=>x.horizon===h.id).length,correct:history.filter(x=>x.horizon===h.id&&x.result==="correct").length,partial:history.filter(x=>x.horizon===h.id&&x.result==="partial").length})).filter(h=>h.total>0);
-const inp={width:"100%",background:"white",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 10px",color:"#1e293b",fontSize:12,fontFamily:"Inter"};
-return<div>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-<h2 style={{fontSize:16,fontWeight:700,color:"#1e293b"}}>🎯 Prediction Accuracy Tracker</h2>
-<button onClick={()=>setShowAdd(!showAdd)} style={{padding:"7px 14px",background:"#6366f1",border:"none",borderRadius:6,color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>+ Log Result</button>
-</div>
-{total>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
-{[{label:"Total Logged",value:total,color:"#6366f1",icon:"📋"},{label:"Accuracy",value:accuracy+"%",color:accuracy>65?"#10b981":accuracy>45?"#f59e0b":"#ef4444",icon:"🎯"},{label:"Correct",value:correct,color:"#10b981",icon:"✅"},{label:"Partial",value:partial,color:"#f59e0b",icon:"🟡"}].map(s=><StatCard key={s.label} label={s.label} value={s.value} color={s.color} icon={s.icon}/>)}
-</div>}
-{byHorizon.length>0&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:16}}>
-<div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:12}}>Accuracy by Time Horizon</div>
-{byHorizon.map(h=>{const acc=Math.round((h.correct+h.partial*0.5)/h.total*100);return<div key={h.id} style={{marginBottom:10}}>
-<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:12,color:"#374151",fontWeight:600}}>{h.icon} {h.label} <span style={{color:"#94a3b8",fontWeight:400}}>({h.total} calls)</span></span><span style={{fontSize:12,fontWeight:700,color:acc>65?"#10b981":acc>45?"#f59e0b":"#ef4444"}}>{acc}%</span></div>
-<div style={{height:6,background:"#f1f5f9",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${acc}%`,background:acc>65?"#10b981":acc>45?"#f59e0b":"#ef4444",borderRadius:3}}/></div>
-</div>;})}
-</div>}
-{showAdd&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:16,border:"1px solid #e2e8f0"}}>
-<div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:12}}>Log Prediction Result</div>
-<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-<div><div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:4}}>TIME HORIZON</div><select value={form.horizon} onChange={e=>setForm({...form,horizon:e.target.value})} style={inp}>{HORIZONS.map(h=><option key={h.id} value={h.id}>{h.icon} {h.label}</option>)}</select></div>
-<div><div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:4}}>RESULT</div><select value={form.result} onChange={e=>setForm({...form,result:e.target.value})} style={inp}><option value="correct">✅ Correct</option><option value="partial">🟡 Partial</option><option value="wrong">❌ Wrong</option></select></div>
-</div>
-<div style={{marginBottom:10}}><div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:4}}>NOTES</div><input value={form.note} onChange={e=>setForm({...form,note:e.target.value})} placeholder="What happened?" style={inp}/></div>
-<div style={{display:"flex",gap:8}}><button onClick={save} style={{flex:1,padding:"8px",background:"#10b981",border:"none",borderRadius:6,color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>Save</button><button onClick={()=>setShowAdd(false)} style={{flex:1,padding:"8px",background:"#f1f5f9",border:"none",borderRadius:6,color:"#64748b",fontSize:12,cursor:"pointer",fontWeight:600}}>Cancel</button></div>
-</div>}
-{history.length>0&&!showAdd&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>
-<div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:12}}>Recent Predictions</div>
-{history.slice(0,8).map(h=><div key={h.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f1f5f9"}}>
-<span style={{fontSize:16}}>{h.result==="correct"?"✅":h.result==="partial"?"🟡":"❌"}</span>
-<div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:"#1e293b"}}>{HORIZONS.find(x=>x.id===h.horizon)?.label||h.horizon}</div>{h.note&&<div style={{fontSize:11,color:"#64748b"}}>{h.note}</div>}</div>
-<div style={{fontSize:11,color:"#94a3b8"}}>{new Date(h.timestamp).toLocaleDateString()}</div>
-</div>)}
-</div>}
-{total===0&&!showAdd&&<div style={{background:"white",borderRadius:10,padding:32,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",textAlign:"center"}}><div style={{fontSize:32,marginBottom:8}}>🎯</div><div style={{fontSize:14,fontWeight:600,color:"#374151",marginBottom:6}}>No predictions logged yet</div><div style={{fontSize:12,color:"#64748b"}}>Generate a brief then log the result after the horizon passes to build your calibration score.</div></div>}
-</div>;
+  const[history,setHistory]=useState(()=>{try{return JSON.parse(localStorage.getItem("apex_history")||"[]");}catch{return[];}});
+  const[showAdd,setShowAdd]=useState(false);
+  const[form,setForm]=useState({horizon:"tomorrow",result:"correct",note:""});
+  const save=()=>{const h=[{...form,id:Date.now(),timestamp:new Date().toISOString()},...history].slice(0,100);setHistory(h);localStorage.setItem("apex_history",JSON.stringify(h));setShowAdd(false);};
+  const total=history.length,correct=history.filter(h=>h.result==="correct").length,partial=history.filter(h=>h.result==="partial").length;
+  const accuracy=total>0?Math.round((correct+partial*0.5)/total*100):0;
+  const byHorizon=HORIZONS.map(h=>({...h,total:history.filter(x=>x.horizon===h.id).length,correct:history.filter(x=>x.horizon===h.id&&x.result==="correct").length,partial:history.filter(x=>x.horizon===h.id&&x.result==="partial").length})).filter(h=>h.total>0);
+  const inp={width:"100%",background:"white",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 10px",color:"#1e293b",fontSize:12,fontFamily:"Inter"};
+  return<div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <h2 style={{fontSize:16,fontWeight:700,color:"#1e293b"}}>🎯 Prediction Accuracy Tracker</h2>
+      <button onClick={()=>setShowAdd(!showAdd)} style={{padding:"7px 14px",background:"#6366f1",border:"none",borderRadius:6,color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>+ Log Result</button>
+    </div>
+    {total>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      {[{label:"Total Logged",value:total,color:"#6366f1",icon:"📋"},{label:"Accuracy",value:accuracy+"%",color:accuracy>65?"#10b981":accuracy>45?"#f59e0b":"#ef4444",icon:"🎯"},{label:"Correct",value:correct,color:"#10b981",icon:"✅"},{label:"Partial",value:partial,color:"#f59e0b",icon:"🟡"}].map(s=><StatCard key={s.label} label={s.label} value={s.value} color={s.color} icon={s.icon}/>)}
+    </div>}
+    {byHorizon.length>0&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:16}}>
+      <div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:12}}>Accuracy by Time Horizon</div>
+      {byHorizon.map(h=>{const acc=Math.round((h.correct+h.partial*0.5)/h.total*100);return<div key={h.id} style={{marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:12,color:"#374151",fontWeight:600}}>{h.icon} {h.label} <span style={{color:"#94a3b8",fontWeight:400}}>({h.total} calls)</span></span><span style={{fontSize:12,fontWeight:700,color:acc>65?"#10b981":acc>45?"#f59e0b":"#ef4444"}}>{acc}%</span></div>
+        <div style={{height:6,background:"#f1f5f9",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${acc}%`,background:acc>65?"#10b981":acc>45?"#f59e0b":"#ef4444",borderRadius:3}}/></div>
+      </div>;})}
+    </div>}
+    {showAdd&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:16,border:"1px solid #e2e8f0"}}>
+      <div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:12}}>Log Prediction Result</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+        <div><div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:4}}>TIME HORIZON</div><select value={form.horizon} onChange={e=>setForm({...form,horizon:e.target.value})} style={inp}>{HORIZONS.map(h=><option key={h.id} value={h.id}>{h.icon} {h.label}</option>)}</select></div>
+        <div><div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:4}}>RESULT</div><select value={form.result} onChange={e=>setForm({...form,result:e.target.value})} style={inp}><option value="correct">✅ Correct</option><option value="partial">🟡 Partial</option><option value="wrong">❌ Wrong</option></select></div>
+      </div>
+      <div style={{marginBottom:10}}><div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:4}}>NOTES</div><input value={form.note} onChange={e=>setForm({...form,note:e.target.value})} placeholder="What happened?" style={inp}/></div>
+      <div style={{display:"flex",gap:8}}><button onClick={save} style={{flex:1,padding:"8px",background:"#10b981",border:"none",borderRadius:6,color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>Save</button><button onClick={()=>setShowAdd(false)} style={{flex:1,padding:"8px",background:"#f1f5f9",border:"none",borderRadius:6,color:"#64748b",fontSize:12,cursor:"pointer",fontWeight:600}}>Cancel</button></div>
+    </div>}
+    {history.length>0&&!showAdd&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>
+      <div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:12}}>Recent Predictions</div>
+      {history.slice(0,8).map(h=><div key={h.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f1f5f9"}}>
+        <span style={{fontSize:16}}>{h.result==="correct"?"✅":h.result==="partial"?"🟡":"❌"}</span>
+        <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:"#1e293b"}}>{HORIZONS.find(x=>x.id===h.horizon)?.label||h.horizon}</div>{h.note&&<div style={{fontSize:11,color:"#64748b"}}>{h.note}</div>}</div>
+        <div style={{fontSize:11,color:"#94a3b8"}}>{new Date(h.timestamp).toLocaleDateString()}</div>
+      </div>)}
+    </div>}
+    {total===0&&!showAdd&&<div style={{background:"white",borderRadius:10,padding:32,textAlign:"center"}}><div style={{fontSize:32,marginBottom:8}}>🎯</div><div style={{fontSize:14,fontWeight:600,color:"#374151",marginBottom:6}}>No predictions logged yet</div><div style={{fontSize:12,color:"#64748b"}}>Generate a brief then log the result after the horizon passes.</div></div>}
+  </div>;
 }
+
 function KeyEntry({onSave}){
-const[k,setK]=useState("");const[err,setErr]=useState("");
-const save=()=>{if(!k.startsWith("sk-ant-")){setErr("Key must start with sk-ant-");return;}if(k.length<50){setErr("Key too short");return;}localStorage.setItem("apex_key",k.trim());onSave(k.trim());};
-return<div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1e3a5f,#1a2744)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
-<div style={{width:"100%",maxWidth:440,background:"white",borderRadius:16,padding:36,boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
-<div style={{textAlign:"center",marginBottom:28}}><div style={{fontSize:32,fontWeight:800,color:"#1e3a5f",letterSpacing:2,marginBottom:4}}>APEX</div><div style={{fontSize:12,color:"#64748b",letterSpacing:1}}>MARKET INTELLIGENCE v5.0</div><div style={{width:40,height:3,background:"linear-gradient(90deg,#6366f1,#0ea5e9)",borderRadius:2,margin:"12px auto 0"}}/></div>
-<div style={{fontSize:13,color:"#475569",marginBottom:20,lineHeight:1.6,textAlign:"center"}}>Enter your Anthropic API key to activate your institutional market intelligence terminal.</div>
-<div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:6}}>ANTHROPIC API KEY</div>
-<input type="password" value={k} onChange={e=>setK(e.target.value)} onKeyDown={e=>e.key==="Enter"&&save()} placeholder="sk-ant-api03-..." style={{width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"11px 14px",color:"#1e293b",fontSize:13,marginBottom:err?8:16,fontFamily:"monospace"}}/>
-{err&&<div style={{color:"#ef4444",fontSize:11,marginBottom:12}}>{err}</div>}
-<button onClick={save} style={{width:"100%",padding:"12px",background:"linear-gradient(90deg,#6366f1,#0ea5e9)",border:"none",borderRadius:8,color:"white",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:16}}>Activate APEX →</button>
-<div style={{fontSize:11,color:"#94a3b8",textAlign:"center",lineHeight:1.6}}>Get your key at <span style={{color:"#6366f1",fontWeight:600}}>platform.anthropic.com</span><br/>API Keys → Create Key · ~$0.01-0.03 per brief</div>
-</div>
-</div>;
+  const[k,setK]=useState("");const[err,setErr]=useState("");
+  const save=()=>{if(!k.startsWith("sk-ant-")){setErr("Key must start with sk-ant-");return;}if(k.length<50){setErr("Key too short");return;}localStorage.setItem("apex_key",k.trim());onSave(k.trim());};
+  return<div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1e3a5f,#1a2744)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+    <div style={{width:"100%",maxWidth:440,background:"white",borderRadius:16,padding:36,boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
+      <div style={{textAlign:"center",marginBottom:28}}><div style={{fontSize:32,fontWeight:800,color:"#1e3a5f",letterSpacing:2,marginBottom:4}}>APEX</div><div style={{fontSize:12,color:"#64748b",letterSpacing:1}}>MARKET INTELLIGENCE v5.0</div><div style={{width:40,height:3,background:"linear-gradient(90deg,#6366f1,#0ea5e9)",borderRadius:2,margin:"12px auto 0"}}/></div>
+      <div style={{fontSize:9,color:"#64748b",fontWeight:600,marginBottom:6}}>ANTHROPIC API KEY</div>
+      <input type="password" value={k} onChange={e=>setK(e.target.value)} onKeyDown={e=>e.key==="Enter"&&save()} placeholder="sk-ant-api03-..." style={{width:"100%",border:"1px solid #e2e8f0",borderRadius:8,padding:"11px 14px",color:"#1e293b",fontSize:13,marginBottom:err?8:16,fontFamily:"monospace"}}/>
+      {err&&<div style={{color:"#ef4444",fontSize:11,marginBottom:12}}>{err}</div>}
+      <button onClick={save} style={{width:"100%",padding:"12px",background:"linear-gradient(90deg,#6366f1,#0ea5e9)",border:"none",borderRadius:8,color:"white",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:16}}>Activate APEX →</button>
+      <div style={{fontSize:11,color:"#94a3b8",textAlign:"center",lineHeight:1.6}}>Get your key at <span style={{color:"#6366f1",fontWeight:600}}>platform.anthropic.com</span><br/>API Keys → Create Key · ~$0.01-0.03 per brief</div>
+    </div>
+  </div>;
 }
+
+// ── Main App ──────────────────────────────────────────────────────────────────
 function App(){
-const[apiKey,setApiKey]=useState(()=>localStorage.getItem("apex_key")||"");
-const[hz,setHz]=useState("tomorrow");
-const[ln,setLn]=useState(null);
-const[tab,setTab]=useState("brief");
-const[cache,setCache]=useState({});
-const[loading,setLoading]=useState(false);
-const[error,setError]=useState(null);
-const[ts,setTs]=useState(null);
-const[sideOpen,setSideOpen]=useState(false);
-const[isMobile,setIsMobile]=useState(window.innerWidth<900);
-useEffect(()=>{const h=()=>setIsMobile(window.innerWidth<900);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
-const key=hz+"__"+(ln||"all");
-const H=HORIZONS.find(x=>x.id===hz);
-const P=parse(cache[key]||"");
-const SS=SS_MAP[P?.signal]||SS_MAP.NEUTRAL;
-const neutralProb=Math.max(0,100-(P?.bullProb||40)-(P?.bearProb||30));
-const go=useCallback(async(force=false)=>{
-if(!apiKey)return;
-if(cache[key]&&!force)return;
-setLoading(true);setError(null);
-try{
-const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1500,messages:[{role:"user",content:buildPrompt(hz,ln)}]})});
-if(!r.ok){const e=await r.json();throw new Error(e.error?.message||"HTTP "+r.status);}
-const d=await r.json();
-const t=(d.content||[]).map(b=>b.text||"").join("");
-if(!t)throw new Error("Empty response");
-setCache(p=>({...p,[key]:t}));setTs(new Date());
-}catch(e){setError(e.message.includes("auth")||e.message.includes("key")||e.message.includes("credential")?"Invalid API key. Click Change Key to update.":e.message);}
-finally{setLoading(false);}
-},[hz,ln,key,cache,apiKey]);
-useEffect(()=>{if(apiKey&&tab==="brief")go();},[hz,ln,apiKey]);
-if(!apiKey)return<KeyEntry onSave={setApiKey}/>;
-const spx=[5610,5720,5830,5780,5710,5660,5710,5800,5831];
-const vix=[12.1,13.4,11.8,14.2,17.1,20.3,18.9,17.2,18.4];
-const oil=[82,78,71,65,63,68,70,67,68.4];
-const yc=[10,8,5,2,-2,-8,-14,-18,-18];
-return<div style={{minHeight:"100vh",background:"#f0f4f8",display:"flex",flexDirection:"column"}}>
-<style>{`*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.fu{animation:fu .4s ease forwards}@keyframes sh2{0%{background-position:-300px 0}100%{background-position:300px 0}}.sh{background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);background-size:300px 100%;animation:sh2 1.3s infinite;border-radius:4px;height:12px;margin-bottom:8px}button:focus,input:focus,select:focus{outline:none}`}</style>
-<div style={{background:"linear-gradient(90deg,#1e3a5f,#1a2744)",color:"white",padding:"0 20px",height:56,display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 2px 8px rgba(0,0,0,0.2)",flexShrink:0}}>
-<div style={{display:"flex",alignItems:"center",gap:12}}>
-<button onClick={()=>setSideOpen(!sideOpen)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:6,color:"white",fontSize:16,cursor:"pointer",padding:"4px 10px",lineHeight:1.5}}>☰</button>
-<div><div style={{fontSize:18,fontWeight:800,letterSpacing:2}}>APEX</div><div style={{fontSize:9,color:"rgba(255,255,255,0.5)",letterSpacing:1,marginTop:-2}}>MARKET INTELLIGENCE v5.0</div></div>
-</div>
-<div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-{["brief","accuracy","indicators"].map(t=><button key={t} onClick={()=>setTab(t)} style={{padding:"5px 12px",borderRadius:6,border:"none",background:tab===t?"rgba(255,255,255,0.15)":"transparent",color:tab===t?"white":"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontWeight:600}}>
-{t==="brief"?"📊 BRIEF":t==="accuracy"?"🎯 ACCURACY":"📈 INDICATORS"}
-</button>)}
-{ts&&<span style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Updated {ts.toLocaleTimeString()}</span>}
-<div style={{width:8,height:8,borderRadius:"50%",background:"#10b981",boxShadow:"0 0 6px #10b981"}}/>
-</div>
-</div>
-<div style={{background:"#1a2744",height:28,overflow:"hidden",display:"flex",alignItems:"center",flexShrink:0}}>
-<div className="roll">
-{[...TICKERS,...TICKERS].map((t,i)=><span key={i} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"0 18px",fontSize:10,whiteSpace:"nowrap",fontFamily:"monospace"}}>
-<span style={{color:"rgba(255,255,255,0.5)",fontWeight:700}}>{t.s}</span>
-<span style={{color:"white",fontWeight:600}}>{t.v}</span>
-<span style={{color:t.up?"#10b981":"#ef4444",fontWeight:700}}>{t.c}</span>
-<span style={{color:"rgba(255,255,255,0.15)",marginLeft:6}}>│</span>
-</span>)}
-</div>
-</div>
-<div style={{background:"white",borderBottom:"1px solid #e2e8f0",padding:"10px 16px",display:"flex",gap:6,overflowX:"auto",WebkitOverflowScrolling:"touch",flexShrink:0,boxShadow:"0 1px 3px rgba(0,0,0,0.05)"}}>
-{HORIZONS.map(hh=><button key={hh.id} onClick={()=>setHz(hh.id)} style={{flexShrink:0,padding:"6px 14px",borderRadius:20,border:`1.5px solid ${hz===hh.id?hh.color:"#e2e8f0"}`,background:hz===hh.id?hh.color:"white",color:hz===hh.id?"white":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s",boxShadow:hz===hh.id?`0 2px 8px ${hh.color}40`:"none"}}>
-{hh.icon} {hh.label}
-</button>)}
-</div>
-<div style={{display:"flex",flex:1,overflow:"hidden",position:"relative"}}>
-{sideOpen&&<div style={{position:"fixed",inset:0,zIndex:300,display:"flex"}}>
-<div style={{width:260,background:"white",boxShadow:"4px 0 20px rgba(0,0,0,0.15)",overflowY:"auto"}}>
-<div style={{background:"linear-gradient(135deg,#1e3a5f,#1a2744)",padding:"16px",color:"white",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-<div style={{fontWeight:800,fontSize:16,letterSpacing:1}}>Navigation</div>
-<button onClick={()=>setSideOpen(false)} style={{background:"transparent",border:"none",color:"white",fontSize:20,cursor:"pointer"}}>✕</button>
-</div>
-<div style={{padding:12}}>
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,padding:"8px 8px 4px",textTransform:"uppercase"}}>Time Horizons</div>
-{HORIZONS.map(hh=><button key={hh.id} onClick={()=>{setHz(hh.id);setSideOpen(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"9px 10px",borderRadius:8,border:"none",background:hz===hh.id?`${hh.color}15`:"transparent",cursor:"pointer",textAlign:"left",marginBottom:2}}>
-<span style={{fontSize:18,width:24}}>{hh.icon}</span>
-<div><div style={{fontSize:12,fontWeight:600,color:hz===hh.id?hh.color:"#374151"}}>{hh.label}</div><div style={{fontSize:10,color:"#94a3b8"}}>{hh.sub}</div></div>
-{hz===hh.id&&<div style={{marginLeft:"auto",width:6,height:6,borderRadius:"50%",background:hh.color}}/>}
-</button>)}
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,padding:"12px 8px 4px",textTransform:"uppercase"}}>Signal Lens</div>
-<div style={{display:"flex",flexWrap:"wrap",gap:6,padding:"0 2px"}}>
-{LENSES.map(l=><button key={l.id} onClick={()=>setLn(ln===l.id?null:l.id)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${ln===l.id?"#6366f1":"#e2e8f0"}`,background:ln===l.id?"#6366f115":"white",color:ln===l.id?"#6366f1":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer"}}>{l.icon} {l.label}</button>)}
-</div>
-<button onClick={()=>{localStorage.removeItem("apex_key");setApiKey("");}} style={{width:"100%",padding:"8px",background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,color:"#64748b",fontSize:11,cursor:"pointer",marginTop:16}}>🔑 Change API Key</button>
-</div>
-</div>
-<div style={{flex:1,background:"rgba(0,0,0,0.4)"}} onClick={()=>setSideOpen(false)}/>
-</div>}
-{!isMobile&&<div style={{width:220,background:"white",borderRight:"1px solid #e2e8f0",overflowY:"auto",flexShrink:0}}>
-<div style={{padding:12}}>
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,padding:"8px 8px 4px",textTransform:"uppercase"}}>Time Horizons</div>
-{HORIZONS.map(hh=><button key={hh.id} onClick={()=>setHz(hh.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"9px 10px",borderRadius:8,border:"none",background:hz===hh.id?`${hh.color}15`:"transparent",cursor:"pointer",textAlign:"left",marginBottom:2}}>
-<span style={{fontSize:16,width:20}}>{hh.icon}</span>
-<div><div style={{fontSize:12,fontWeight:600,color:hz===hh.id?hh.color:"#374151"}}>{hh.label}</div><div style={{fontSize:10,color:"#94a3b8"}}>{hh.sub}</div></div>
-{hz===hh.id&&<div style={{marginLeft:"auto",width:6,height:6,borderRadius:"50%",background:hh.color}}/>}
-</button>)}
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,padding:"12px 8px 4px",textTransform:"uppercase"}}>Signal Lens</div>
-<div style={{display:"flex",flexWrap:"wrap",gap:5,padding:"0 2px"}}>
-{LENSES.map(l=><button key={l.id} onClick={()=>setLn(ln===l.id?null:l.id)} style={{padding:"4px 8px",borderRadius:5,border:`1px solid ${ln===l.id?"#6366f1":"#e2e8f0"}`,background:ln===l.id?"#6366f115":"transparent",color:ln===l.id?"#6366f1":"#64748b",fontSize:10,fontWeight:600,cursor:"pointer"}}>{l.icon} {l.label}</button>)}
-</div>
-<button onClick={()=>{localStorage.removeItem("apex_key");setApiKey("");}} style={{width:"100%",padding:"7px",background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,color:"#94a3b8",fontSize:10,cursor:"pointer",marginTop:14}}>🔑 Change Key</button>
-</div>
-</div>}
-<div style={{flex:1,overflowY:"auto",padding:isMobile?12:20}}>
-{tab==="indicators"&&<div className="fu">
-<h2 style={{fontSize:16,fontWeight:700,color:"#1e293b",marginBottom:16}}>📈 Market Indicators Dashboard</h2>
-<div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(5,1fr)",gap:12,marginBottom:20}}>
-{INDICATORS.map(ind=><div key={ind.label} style={{background:"white",borderRadius:10,padding:14,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",borderTop:`3px solid ${ind.color}`}}>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}><div style={{fontSize:11,color:"#64748b",fontWeight:600,lineHeight:1.3}}>{ind.label}</div><span style={{fontSize:16}}>{ind.icon}</span></div>
-<div style={{fontSize:14,fontWeight:700,color:ind.color,marginBottom:6}}>{ind.status}</div>
-<div style={{height:6,background:"#f1f5f9",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${ind.value}%`,background:ind.color,borderRadius:3}}/></div>
-<div style={{fontSize:10,color:"#94a3b8",marginTop:3,textAlign:"right"}}>{ind.value}/100</div>
-</div>)}
-</div>
-<div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12}}>
-{[{title:"S&P 500 Trend",data:spx,color:"#6366f1",label:"SPX 5,831"},{title:"VIX Trend",data:vix,color:"#ef4444",label:"VIX 18.4"},{title:"Oil Trend",data:oil,color:"#f59e0b",label:"WTI $68.4"},{title:"Yield Curve",data:yc,color:"#f97316",label:"-18bps INV"}].map(chart=><div key={chart.title} style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><div style={{fontSize:13,fontWeight:600,color:"#374151"}}>{chart.title}</div><div style={{fontSize:13,fontWeight:700,color:chart.color}}>{chart.label}</div></div>
-<Spark data={chart.data} color={chart.color} w={isMobile?180:260} h={60}/>
-</div>)}
-</div>
-</div>}
-{tab==="accuracy"&&<div className="fu"><AccuracyTracker/></div>}
-{tab==="brief"&&<>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-<div><div style={{fontSize:12,color:"#94a3b8",fontWeight:500,marginBottom:2}}>{H?.sub} · Intelligence Brief</div><h1 style={{fontSize:isMobile?18:22,fontWeight:800,color:"#1e293b"}}>{H?.icon} {H?.label} Market Outlook</h1></div>
-<button onClick={()=>{setCache(p=>{const n={...p};delete n[key];return n;});setTimeout(()=>go(true),30);}} style={{padding:"8px 16px",background:"white",border:"1.5px solid #e2e8f0",borderRadius:8,color:"#6366f1",fontSize:12,cursor:"pointer",fontWeight:600,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>↺ Refresh</button>
-</div>
-{loading&&<div style={{background:"white",borderRadius:10,padding:20,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12}}><div style={{fontSize:12,color:"#94a3b8",fontWeight:600,marginBottom:12}}>Acquiring market intelligence signal...</div>{[90,75,85,60,70].map((w,i)=><div key={i} className="sh" style={{width:`${w}%`}}/>)}</div>}
-{!loading&&error&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:16,marginBottom:12}}><div style={{color:"#dc2626",fontSize:13,marginBottom:10}}>{error}</div><div style={{display:"flex",gap:8}}><button onClick={()=>go(true)} style={{padding:"7px 14px",background:"#ef4444",border:"none",borderRadius:6,color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>Retry</button><button onClick={()=>{localStorage.removeItem("apex_key");setApiKey("");}} style={{padding:"7px 14px",background:"white",border:"1px solid #e2e8f0",borderRadius:6,color:"#64748b",fontSize:12,cursor:"pointer",fontWeight:600}}>Change Key</button></div></div>}
-{!loading&&P?.headline&&<div className="fu">
-<div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}}>
-<div style={{flex:1,minWidth:120,background:SS.bg,border:`1.5px solid ${SS.border}`,borderRadius:10,padding:"14px 16px",boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:SS.text,fontWeight:700,letterSpacing:0.5,marginBottom:4,opacity:0.7}}>APEX SIGNAL</div><div style={{fontSize:24,fontWeight:800,color:SS.text}}>{SS.icon} {P.signal}</div></div>
-<StatCard label="Conviction" value={`${P.conviction}%`} sub="Overall strength" color={H?.color||"#6366f1"} icon="💪"/>
-<StatCard label="Bull Probability" value={`${P.bullProb}%`} sub={`Bear: ${P.bearProb}%`} color="#10b981" icon="📈"/>
-<StatCard label="Expected Move" value={P.expectedMove||"—"} sub="Price range" color="#f59e0b" icon="🎯"/>
-</div>
-<div style={{background:"white",borderRadius:10,padding:20,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12,borderLeft:`4px solid ${H?.color||"#6366f1"}`}}>
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>APEX Headline</div>
-<div style={{fontSize:isMobile?14:15,fontWeight:600,color:"#1e293b",lineHeight:1.6}}>{P.headline}</div>
-</div>
-<div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 2fr",gap:12,marginBottom:12}}>
-<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Probability Split</div><BarChart bull={P.bullProb} bear={P.bearProb} neutral={neutralProb}/></div>
-<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Probability Scenarios</div><div style={{fontSize:12,lineHeight:1.8,color:"#374151",whiteSpace:"pre-wrap"}}>{P.scenarios}</div></div>
-</div>
-<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12}}>
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:12,textTransform:"uppercase"}}>Signal Strength</div>
-<ProgressBar value={P.bullProb} color="#10b981" label="Bull Probability" sublabel={`${P.bullProb}% ▲`}/>
-<ProgressBar value={P.bearProb} color="#ef4444" label="Bear Probability" sublabel={`${P.bearProb}% ▼`}/>
-<ProgressBar value={P.conviction} color={H?.color||"#6366f1"} label="Overall Conviction" sublabel={`${P.conviction}%`}/>
-</div>
-{P.drivers&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Key Market Drivers</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.drivers}</div></div>}
-<div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr 1fr",gap:12,marginBottom:12}}>
-{P.watchlist&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>👁 Watch List</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.watchlist}</div></div>}
-{P.peIntel&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>💼 PE / M&A Intel</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.peIntel}</div></div>}
-{P.sectorRotation&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>🔄 Sector Rotation</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.sectorRotation}</div></div>}
-</div>
-{P.riskMatrix&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>⚠️ Risk Matrix</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.riskMatrix}</div></div>}
-{P.tactical&&<div style={{background:"linear-gradient(135deg,#1e3a5f,#1a2744)",borderRadius:10,padding:20,boxShadow:"0 4px 12px rgba(30,58,95,0.3)",marginBottom:12}}><div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>⚡ APEX Tactical Call</div><div style={{fontSize:isMobile?13:14,fontWeight:600,color:"white",lineHeight:1.7,fontStyle:"italic"}}>{P.tactical}</div></div>}
-<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12,border:"1.5px dashed #e2e8f0"}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:2}}>🎯 Track This Prediction</div><div style={{fontSize:11,color:"#94a3b8"}}>After this horizon passes, log the result to build your accuracy score</div></div><button onClick={()=>setTab("accuracy")} style={{padding:"8px 16px",background:"#6366f1",border:"none",borderRadius:7,color:"white",fontSize:12,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap",flexShrink:0,marginLeft:12}}>Log Result →</button></div></div>
-</div>}
-{!loading&&cache[key]&&!P?.headline&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:12,color:"#374151",whiteSpace:"pre-wrap"}}>{cache[key]}</div></div>}
-</>}
-</div>
-{!isMobile&&tab==="brief"&&<div style={{width:220,background:"white",borderLeft:"1px solid #e2e8f0",overflowY:"auto",flexShrink:0,padding:14}}>
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:12,textTransform:"uppercase"}}>Market Overview</div>
-<div style={{background:"#f8fafc",borderRadius:10,padding:12,marginBottom:12,textAlign:"center"}}>
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,marginBottom:6}}>RISK APPETITE</div>
-<div style={{fontSize:32,fontWeight:800,color:"#f59e0b"}}>72</div>
-<div style={{fontSize:11,fontWeight:700,color:"#f59e0b",marginBottom:6}}>GREED</div>
-<div style={{height:6,background:"#e2e8f0",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:"72%",background:"linear-gradient(90deg,#10b981,#f59e0b)",borderRadius:3}}/></div>
-<div style={{fontSize:9,color:"#94a3b8",marginTop:3}}>GS Indicator: 99th Pct</div>
-</div>
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Key Levels</div>
-{[{sym:"S&P 500",val:"5,831",chg:"-0.42%",up:false,spark:spx,color:"#6366f1"},{sym:"VIX",val:"18.4",chg:"+2.1",up:false,spark:vix,color:"#ef4444"},{sym:"WTI Oil",val:"$68.4",chg:"-0.8%",up:true,spark:oil,color:"#f59e0b"},{sym:"Yield Curve",val:"-18bps",chg:"INVERTED",up:false,spark:yc,color:"#f97316"}].map(t=><div key={t.sym} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>
-<div><div style={{fontSize:10,color:"#94a3b8"}}>{t.sym}</div><div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>{t.val}</div><div style={{fontSize:10,fontWeight:600,color:t.up?"#10b981":"#ef4444"}}>{t.chg}</div></div>
-<Spark data={t.spark} color={t.color} w={50} h={24}/>
-</div>)}
-{P&&<><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,margin:"12px 0 8px",textTransform:"uppercase"}}>Live Conviction</div>
-<ProgressBar value={P.bullProb||40} color="#10b981" label="Bull" sublabel={`${P.bullProb||40}%`}/>
-<ProgressBar value={P.bearProb||30} color="#ef4444" label="Bear" sublabel={`${P.bearProb||30}%`}/>
-<ProgressBar value={P.conviction||50} color={H?.color||"#6366f1"} label="Conviction" sublabel={`${P.conviction||50}%`}/></>}
-<div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,margin:"12px 0 8px",textTransform:"uppercase"}}>Catalysts</div>
-{[{d:"Jul 7",e:"ISM Services PMI",hot:false},{d:"Jul 7+",e:"Q2 Earnings Season",hot:true},{d:"Jul 14",e:"Bank Earnings",hot:true},{d:"Jul 28-29",e:"FOMC Meeting",hot:true},{d:"Jul 30",e:"Apple Q2",hot:true},{d:"Aug",e:"CPI + Jackson Hole",hot:true},{d:"Dec",e:"Fed Hike 100%",hot:true}].map((c,i)=><div key={i} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"5px 0",borderBottom:"1px solid #f1f5f9"}}>
-<div style={{width:6,height:6,borderRadius:"50%",background:c.hot?"#ef4444":"#f59e0b",flexShrink:0,marginTop:3}}/>
-<div><div style={{fontSize:9,color:"#94a3b8",fontWeight:600}}>{c.d}</div><div style={{fontSize:11,color:"#374151",fontWeight:500}}>{c.e}</div></div>
-</div>)}
-</div>}
-</div>
-<div style={{background:"white",borderTop:"1px solid #e2e8f0",padding:"6px 16px",display:"flex",justifyContent:"space-between",fontSize:10,color:"#94a3b8",flexShrink:0}}>
-<span>APEX v5.0 · Speculative · Not Investment Advice</span>
-<span>Data: GS · BlackRock · Bain · PWC · Bloomberg · FactSet</span>
-</div>
-</div>;
+  const[apiKey,setApiKey]=useState(()=>localStorage.getItem("apex_key")||"");
+  const[hz,setHz]=useState("tomorrow");
+  const[ln,setLn]=useState(null);
+  const[tab,setTab]=useState("brief");
+  const[cache,setCache]=useState({});
+  const[loading,setLoading]=useState(false);
+  const[error,setError]=useState(null);
+  const[ts,setTs]=useState(null);
+  const[sideOpen,setSideOpen]=useState(false);
+  const[isMobile,setIsMobile]=useState(window.innerWidth<900);
+
+  useEffect(()=>{const h=()=>setIsMobile(window.innerWidth<900);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
+
+  const key=hz+"__"+(ln||"all");
+  const H=HORIZONS.find(x=>x.id===hz);
+  const P=parse(cache[key]||"");
+  const SS=SS_MAP[P?.signal]||SS_MAP.NEUTRAL;
+  const neutralProb=Math.max(0,100-(P?.bullProb||40)-(P?.bearProb||30));
+
+  const go=useCallback(async(force=false)=>{
+    if(!apiKey)return;
+    if(cache[key]&&!force)return;
+    setLoading(true);setError(null);
+    try{
+      const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1500,messages:[{role:"user",content:buildPrompt(hz,ln)}]})});
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||"HTTP "+r.status);}
+      const d=await r.json();
+      const t=(d.content||[]).map(b=>b.text||"").join("");
+      if(!t)throw new Error("Empty response");
+      setCache(p=>({...p,[key]:t}));setTs(new Date());
+    }catch(e){setError(e.message.includes("auth")||e.message.includes("key")||e.message.includes("credential")?"Invalid API key. Click Change Key to update.":e.message);}
+    finally{setLoading(false);}
+  },[hz,ln,key,cache,apiKey]);
+
+  useEffect(()=>{if(apiKey&&tab==="brief")go();},[hz,ln,apiKey]);
+
+  if(!apiKey)return<KeyEntry onSave={setApiKey}/>;
+
+  const spx=[5610,5720,5830,5780,5710,5660,5710,5800,5831];
+  const vix=[12.1,13.4,11.8,14.2,17.1,20.3,18.9,17.2,18.4];
+  const oil=[82,78,71,65,63,68,70,67,68.4];
+  const yc=[10,8,5,2,-2,-8,-14,-18,-18];
+
+  const TABS=[
+    {id:"brief",label:"📊 Brief"},
+    {id:"smartmoney",label:"🧠 Smart Money"},
+    {id:"accuracy",label:"🎯 Accuracy"},
+    {id:"indicators",label:"📈 Indicators"},
+  ];
+
+  const SidebarContent=()=><div style={{padding:12}}>
+    <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,padding:"8px 8px 4px",textTransform:"uppercase"}}>Time Horizons</div>
+    {HORIZONS.map(hh=><button key={hh.id} onClick={()=>{setHz(hh.id);setSideOpen(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"9px 10px",borderRadius:8,border:"none",background:hz===hh.id?`${hh.color}15`:"transparent",cursor:"pointer",textAlign:"left",marginBottom:2}}>
+      <span style={{fontSize:16,width:20}}>{hh.icon}</span>
+      <div><div style={{fontSize:12,fontWeight:600,color:hz===hh.id?hh.color:"#374151"}}>{hh.label}</div><div style={{fontSize:10,color:"#94a3b8"}}>{hh.sub}</div></div>
+      {hz===hh.id&&<div style={{marginLeft:"auto",width:6,height:6,borderRadius:"50%",background:hh.color}}/>}
+    </button>)}
+    <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,padding:"12px 8px 4px",textTransform:"uppercase"}}>Signal Lens</div>
+    <div style={{display:"flex",flexWrap:"wrap",gap:5,padding:"0 2px"}}>
+      {LENSES.map(l=><button key={l.id} onClick={()=>setLn(ln===l.id?null:l.id)} style={{padding:"4px 8px",borderRadius:5,border:`1px solid ${ln===l.id?"#6366f1":"#e2e8f0"}`,background:ln===l.id?"#6366f115":"transparent",color:ln===l.id?"#6366f1":"#64748b",fontSize:10,fontWeight:600,cursor:"pointer"}}>{l.icon} {l.label}</button>)}
+    </div>
+    <button onClick={()=>{localStorage.removeItem("apex_key");setApiKey("");}} style={{width:"100%",padding:"7px",background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,color:"#94a3b8",fontSize:10,cursor:"pointer",marginTop:14}}>🔑 Change Key</button>
+  </div>;
+
+  return<div style={{minHeight:"100vh",background:"#f0f4f8",display:"flex",flexDirection:"column"}}>
+    <style>{`*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.fu{animation:fu .4s ease forwards}@keyframes sh2{0%{background-position:-300px 0}100%{background-position:300px 0}}.sh{background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);background-size:300px 100%;animation:sh2 1.3s infinite;border-radius:4px;height:12px;margin-bottom:8px}button:focus,input:focus,select:focus{outline:none}`}</style>
+
+    {/* TOP BAR */}
+    <div style={{background:"linear-gradient(90deg,#1e3a5f,#1a2744)",color:"white",padding:"0 20px",height:56,display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 2px 8px rgba(0,0,0,0.2)",flexShrink:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <button onClick={()=>setSideOpen(!sideOpen)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:6,color:"white",fontSize:16,cursor:"pointer",padding:"4px 10px",lineHeight:1.5}}>☰</button>
+        <div><div style={{fontSize:18,fontWeight:800,letterSpacing:2}}>APEX</div><div style={{fontSize:9,color:"rgba(255,255,255,0.5)",letterSpacing:1,marginTop:-2}}>MARKET INTELLIGENCE v5.0</div></div>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+        {TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"5px 10px",borderRadius:6,border:"none",background:tab===t.id?"rgba(255,255,255,0.18)":"transparent",color:tab===t.id?"white":"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"}}>{t.label}</button>)}
+        {ts&&<span style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>Updated {ts.toLocaleTimeString()}</span>}
+        <div style={{width:8,height:8,borderRadius:"50%",background:"#10b981",boxShadow:"0 0 6px #10b981"}}/>
+      </div>
+    </div>
+
+    {/* TICKER */}
+    <div style={{background:"#1a2744",height:28,overflow:"hidden",display:"flex",alignItems:"center",flexShrink:0}}>
+      <div className="roll">
+        {[...TICKERS,...TICKERS].map((t,i)=><span key={i} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"0 18px",fontSize:10,whiteSpace:"nowrap",fontFamily:"monospace"}}>
+          <span style={{color:"rgba(255,255,255,0.5)",fontWeight:700}}>{t.s}</span>
+          <span style={{color:"white",fontWeight:600}}>{t.v}</span>
+          <span style={{color:t.up?"#10b981":"#ef4444",fontWeight:700}}>{t.c}</span>
+          <span style={{color:"rgba(255,255,255,0.15)",marginLeft:6}}>│</span>
+        </span>)}
+      </div>
+    </div>
+
+    {/* HORIZON PILLS */}
+    <div style={{background:"white",borderBottom:"1px solid #e2e8f0",padding:"10px 16px",display:"flex",gap:6,overflowX:"auto",WebkitOverflowScrolling:"touch",flexShrink:0}}>
+      {HORIZONS.map(hh=><button key={hh.id} onClick={()=>setHz(hh.id)} style={{flexShrink:0,padding:"6px 14px",borderRadius:20,border:`1.5px solid ${hz===hh.id?hh.color:"#e2e8f0"}`,background:hz===hh.id?hh.color:"white",color:hz===hh.id?"white":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s",boxShadow:hz===hh.id?`0 2px 8px ${hh.color}40`:"none"}}>
+        {hh.icon} {hh.label}
+      </button>)}
+    </div>
+
+    {/* BODY */}
+    <div style={{display:"flex",flex:1,overflow:"hidden",position:"relative"}}>
+
+      {/* Sidebar Drawer */}
+      {sideOpen&&<div style={{position:"fixed",inset:0,zIndex:300,display:"flex"}}>
+        <div style={{width:260,background:"white",boxShadow:"4px 0 20px rgba(0,0,0,0.15)",overflowY:"auto"}}>
+          <div style={{background:"linear-gradient(135deg,#1e3a5f,#1a2744)",padding:"16px",color:"white",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:800,fontSize:16}}>Navigation</div>
+            <button onClick={()=>setSideOpen(false)} style={{background:"transparent",border:"none",color:"white",fontSize:20,cursor:"pointer"}}>✕</button>
+          </div>
+          <SidebarContent/>
+        </div>
+        <div style={{flex:1,background:"rgba(0,0,0,0.4)"}} onClick={()=>setSideOpen(false)}/>
+      </div>}
+
+      {/* Desktop Sidebar */}
+      {!isMobile&&<div style={{width:220,background:"white",borderRight:"1px solid #e2e8f0",overflowY:"auto",flexShrink:0}}><SidebarContent/></div>}
+
+      {/* Main */}
+      <div style={{flex:1,overflowY:"auto",padding:isMobile?12:20}}>
+
+        {tab==="smartmoney"&&<div className="fu"><SmartMoneyTab/></div>}
+        {tab==="accuracy"&&<div className="fu"><AccuracyTracker/></div>}
+
+        {tab==="indicators"&&<div className="fu">
+          <h2 style={{fontSize:16,fontWeight:700,color:"#1e293b",marginBottom:16}}>📈 Market Indicators Dashboard</h2>
+          <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(5,1fr)",gap:12,marginBottom:20}}>
+            {INDICATORS.map(ind=><div key={ind.label} style={{background:"white",borderRadius:10,padding:14,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",borderTop:`3px solid ${ind.color}`}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}><div style={{fontSize:11,color:"#64748b",fontWeight:600,lineHeight:1.3}}>{ind.label}</div><span style={{fontSize:16}}>{ind.icon}</span></div>
+              <div style={{fontSize:14,fontWeight:700,color:ind.color,marginBottom:6}}>{ind.status}</div>
+              <div style={{height:6,background:"#f1f5f9",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${ind.value}%`,background:ind.color,borderRadius:3}}/></div>
+              <div style={{fontSize:10,color:"#94a3b8",marginTop:3,textAlign:"right"}}>{ind.value}/100</div>
+            </div>)}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12}}>
+            {[{title:"S&P 500 Trend",data:spx,color:"#6366f1",label:"SPX 5,831"},{title:"VIX Trend",data:vix,color:"#ef4444",label:"VIX 18.4"},{title:"Oil Trend",data:oil,color:"#f59e0b",label:"WTI $68.4"},{title:"Yield Curve",data:yc,color:"#f97316",label:"-18bps INV"}].map(chart=><div key={chart.title} style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><div style={{fontSize:13,fontWeight:600,color:"#374151"}}>{chart.title}</div><div style={{fontSize:13,fontWeight:700,color:chart.color}}>{chart.label}</div></div>
+              <Spark data={chart.data} color={chart.color} w={isMobile?180:260} h={60}/>
+            </div>)}
+          </div>
+        </div>}
+
+        {tab==="brief"&&<>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div><div style={{fontSize:12,color:"#94a3b8",fontWeight:500,marginBottom:2}}>{H?.sub} · Intelligence Brief</div><h1 style={{fontSize:isMobile?18:22,fontWeight:800,color:"#1e293b"}}>{H?.icon} {H?.label} Market Outlook</h1></div>
+            <button onClick={()=>{setCache(p=>{const n={...p};delete n[key];return n;});setTimeout(()=>go(true),30);}} style={{padding:"8px 16px",background:"white",border:"1.5px solid #e2e8f0",borderRadius:8,color:"#6366f1",fontSize:12,cursor:"pointer",fontWeight:600,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>↺ Refresh</button>
+          </div>
+          {loading&&<div style={{background:"white",borderRadius:10,padding:20,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12}}><div style={{fontSize:12,color:"#94a3b8",fontWeight:600,marginBottom:12}}>Acquiring market intelligence signal...</div>{[90,75,85,60,70].map((w,i)=><div key={i} className="sh" style={{width:`${w}%`}}/>)}</div>}
+          {!loading&&error&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:16,marginBottom:12}}><div style={{color:"#dc2626",fontSize:13,marginBottom:10}}>{error}</div><div style={{display:"flex",gap:8}}><button onClick={()=>go(true)} style={{padding:"7px 14px",background:"#ef4444",border:"none",borderRadius:6,color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>Retry</button><button onClick={()=>{localStorage.removeItem("apex_key");setApiKey("");}} style={{padding:"7px 14px",background:"white",border:"1px solid #e2e8f0",borderRadius:6,color:"#64748b",fontSize:12,cursor:"pointer",fontWeight:600}}>Change Key</button></div></div>}
+          {!loading&&P?.headline&&<div className="fu">
+            <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}}>
+              <div style={{flex:1,minWidth:120,background:SS.bg,border:`1.5px solid ${SS.border}`,borderRadius:10,padding:"14px 16px",boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:SS.text,fontWeight:700,letterSpacing:0.5,marginBottom:4,opacity:0.7}}>APEX SIGNAL</div><div style={{fontSize:24,fontWeight:800,color:SS.text}}>{SS.icon} {P.signal}</div></div>
+              <StatCard label="Conviction" value={`${P.conviction}%`} sub="Overall strength" color={H?.color||"#6366f1"} icon="💪"/>
+              <StatCard label="Bull Probability" value={`${P.bullProb}%`} sub={`Bear: ${P.bearProb}%`} color="#10b981" icon="📈"/>
+              <StatCard label="Expected Move" value={P.expectedMove||"—"} sub="Price range" color="#f59e0b" icon="🎯"/>
+            </div>
+            <div style={{background:"white",borderRadius:10,padding:20,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12,borderLeft:`4px solid ${H?.color||"#6366f1"}`}}>
+              <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>APEX Headline</div>
+              <div style={{fontSize:isMobile?14:15,fontWeight:600,color:"#1e293b",lineHeight:1.6}}>{P.headline}</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 2fr",gap:12,marginBottom:12}}>
+              <div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>
+                <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:12,textTransform:"uppercase"}}>Probability Split</div>
+                <div style={{display:"flex",alignItems:"flex-end",gap:12,height:80,padding:"0 8px"}}>
+                  {[{label:"Bull",value:P.bullProb,color:"#10b981"},{label:"Neutral",value:neutralProb,color:"#94a3b8"},{label:"Bear",value:P.bearProb,color:"#ef4444"}].map(d=><div key={d.label} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                    <span style={{fontSize:13,fontWeight:700,color:d.color}}>{d.value}%</span>
+                    <div style={{width:"100%",height:50,display:"flex",alignItems:"flex-end"}}><div style={{width:"100%",height:`${d.value}%`,background:d.color,borderRadius:"4px 4px 0 0",minHeight:4}}/></div>
+                    <span style={{fontSize:10,color:"#64748b",fontWeight:600}}>{d.label}</span>
+                  </div>)}
+                </div>
+              </div>
+              <div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Probability Scenarios</div><div style={{fontSize:12,lineHeight:1.8,color:"#374151",whiteSpace:"pre-wrap"}}>{P.scenarios}</div></div>
+            </div>
+            <div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12}}>
+              <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:12,textTransform:"uppercase"}}>Signal Strength</div>
+              <ProgressBar value={P.bullProb} color="#10b981" label="Bull Probability" sublabel={`${P.bullProb}% ▲`}/>
+              <ProgressBar value={P.bearProb} color="#ef4444" label="Bear Probability" sublabel={`${P.bearProb}% ▼`}/>
+              <ProgressBar value={P.conviction} color={H?.color||"#6366f1"} label="Overall Conviction" sublabel={`${P.conviction}%`}/>
+              {P.expectedMove&&<div style={{marginTop:10,padding:"8px 10px",background:"#f8fafc",borderRadius:5,border:"1px solid #e2e8f0"}}><span style={{fontSize:11,color:"#94a3b8",fontWeight:600}}>Expected Move: </span><span style={{fontSize:14,fontWeight:700,color:"#1e293b"}}>{P.expectedMove}</span></div>}
+            </div>
+            {P.drivers&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Key Market Drivers</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.drivers}</div></div>}
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr 1fr",gap:12,marginBottom:12}}>
+              {P.watchlist&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>👁 Watch List</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.watchlist}</div></div>}
+              {P.peIntel&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>💼 PE / M&A Intel</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.peIntel}</div></div>}
+              {P.sectorRotation&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>🔄 Sector Rotation</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.sectorRotation}</div></div>}
+            </div>
+            {P.riskMatrix&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12}}><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>⚠️ Risk Matrix</div><div style={{fontSize:12,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>{P.riskMatrix}</div></div>}
+            {P.tactical&&<div style={{background:"linear-gradient(135deg,#1e3a5f,#1a2744)",borderRadius:10,padding:20,boxShadow:"0 4px 12px rgba(30,58,95,0.3)",marginBottom:12}}><div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>⚡ APEX Tactical Call</div><div style={{fontSize:isMobile?13:14,fontWeight:600,color:"white",lineHeight:1.7,fontStyle:"italic"}}>{P.tactical}</div></div>}
+            <div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",marginBottom:12,border:"1.5px dashed #e2e8f0"}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:2}}>🎯 Track This Prediction</div><div style={{fontSize:11,color:"#94a3b8"}}>Log the result after the horizon passes to build your accuracy score</div></div><button onClick={()=>setTab("accuracy")} style={{padding:"8px 16px",background:"#6366f1",border:"none",borderRadius:7,color:"white",fontSize:12,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap",flexShrink:0,marginLeft:12}}>Log Result →</button></div></div>
+          </div>}
+          {!loading&&cache[key]&&!P?.headline&&<div style={{background:"white",borderRadius:10,padding:16,boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}><div style={{fontSize:12,color:"#374151",whiteSpace:"pre-wrap"}}>{cache[key]}</div></div>}
+        </>}
+      </div>
+
+      {/* Right Panel */}
+      {!isMobile&&tab==="brief"&&<div style={{width:220,background:"white",borderLeft:"1px solid #e2e8f0",overflowY:"auto",flexShrink:0,padding:14}}>
+        <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:12,textTransform:"uppercase"}}>Market Overview</div>
+        <div style={{background:"#f8fafc",borderRadius:10,padding:12,marginBottom:12,textAlign:"center"}}>
+          <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,marginBottom:6}}>RISK APPETITE</div>
+          <div style={{fontSize:32,fontWeight:800,color:"#f59e0b"}}>72</div>
+          <div style={{fontSize:11,fontWeight:700,color:"#f59e0b",marginBottom:6}}>GREED</div>
+          <div style={{height:6,background:"#e2e8f0",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:"72%",background:"linear-gradient(90deg,#10b981,#f59e0b)",borderRadius:3}}/></div>
+          <div style={{fontSize:9,color:"#94a3b8",marginTop:3}}>GS Indicator: 99th Pct</div>
+        </div>
+        <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Key Levels</div>
+        {[{sym:"S&P 500",val:"5,831",chg:"-0.42%",up:false,spark:spx,color:"#6366f1"},{sym:"VIX",val:"18.4",chg:"+2.1",up:false,spark:vix,color:"#ef4444"},{sym:"WTI Oil",val:"$68.4",chg:"-0.8%",up:true,spark:oil,color:"#f59e0b"},{sym:"Yield Curve",val:"-18bps",chg:"INVERTED",up:false,spark:yc,color:"#f97316"}].map(t=><div key={t.sym} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid #f1f5f9"}}>
+          <div><div style={{fontSize:10,color:"#94a3b8"}}>{t.sym}</div><div style={{fontSize:13,fontWeight:700,color:"#1e293b"}}>{t.val}</div><div style={{fontSize:10,fontWeight:600,color:t.up?"#10b981":"#ef4444"}}>{t.chg}</div></div>
+          <Spark data={t.spark} color={t.color} w={50} h={24}/>
+               </div>)}
+        {P&&<><div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,margin:"12px 0 8px",textTransform:"uppercase"}}>Live Conviction</div>
+        <ProgressBar value={P.bullProb||40} color="#10b981" label="Bull" sublabel={`${P.bullProb||40}%`}/>
+        <ProgressBar value={P.bearProb||30} color="#ef4444" label="Bear" sublabel={`${P.bearProb||30}%`}/>
+        <ProgressBar value={P.conviction||50} color={H?.color||"#6366f1"} label="Conviction" sublabel={`${P.conviction||50}%`}/></>}
+        <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,letterSpacing:1,margin:"12px 0 8px",textTransform:"uppercase"}}>Smart Money</div>
+        {SMART_MONEY.slice(0,5).map(p=>{
+          const sc=SIG_COLOR[p.signal];
+          return<div key={p.id} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 0",borderBottom:"1px solid #f1f5f9"}}>
+            <span style={{fontSize:14}}>{p.avatar}</span>
+            <div style={{flex:1}}><div style={{fontSize:10,fontWeight:600,color:"#1e293b"}}>{p.name.split(" ").slice(-1)[0]}</div></div>
+            <div style={{fontSize:11,fontWeight:700,color:sc}}>{p.signal==="BULLISH"?"▲":p.signal==="BEARISH"?"▼":"◆"}</div>
+          </div>;
+        })}
+        <button onClick={()=>setTab("smartmoney")} style={{width:"100%",padding:"7px",background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:6,color:"#6366f1",fontSize:10,cursor:"pointer",fontWeight:600,marginTop:8}}>View Full Smart Money →</button>
+      </div>}
+    </div>
+
+    <div style={{background:"white",borderTop:"1px solid #e2e8f0",padding:"6px 16px",display:"flex",justifyContent:"space-between",fontSize:10,color:"#94a3b8",flexShrink:0}}>
+      <span>APEX v5.0 · Speculative · Not Investment Advice</span>
+      <span>Data: GS · BlackRock · Bloomberg · FactSet · STOCK Act · SEC 13-F</span>
+    </div>
+  </div>;
 }
+
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
